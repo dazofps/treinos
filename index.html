@@ -1028,6 +1028,8 @@ function renderHomeData(){
   // summary cards
   const dates=new Set(S.workoutLog.map(w=>w.dateISO));
   let streak=0;const dd=new Date();
+  // If no workout today yet, start counting from yesterday so streak doesn't reset mid-day
+  if(!dates.has(dd.toISOString().slice(0,10)))dd.setDate(dd.getDate()-1);
   while(true){const k=dd.toISOString().slice(0,10);if(dates.has(k)){streak++;dd.setDate(dd.getDate()-1);}else break;}
   document.getElementById('rep-streak').textContent=streak;
   document.getElementById('rep-total').textContent=S.workoutLog.length;
@@ -1148,6 +1150,7 @@ function renderExList(){
     // Only open finish modal once per session (not on re-render)
     if(!wd._finishShown) {
       if(!wd.done)wd.done={};
+      wd.done[curTid]=true;
       if(!wd.daysTrained)wd.daysTrained={};wd.daysTrained[new Date().getDay()]=true;
       wd._finishShown=true; save();
       document.getElementById('finish-dur').value='';
@@ -1231,10 +1234,15 @@ function finishWorkout(){
   const cal=parseInt(document.getElementById('finish-cal').value)||0;
   const t=getTreinos().find(t=>t.id===curTid);
   const now=new Date();
+  const dateISO=now.toISOString().slice(0,10);
   S.workoutLog.unshift({treinoId:curTid,label:t.label,focus:t.focus,
-    date:now.toLocaleDateString('pt-BR'),dateISO:now.toISOString().slice(0,10),dur,cal});
+    date:now.toLocaleDateString('pt-BR'),dateISO,dur,cal});
+  // Guarantee meta semanal & daysTrained are updated
+  const wd=getWD(weekKey(0));
+  if(!wd.done)wd.done={};wd.done[curTid]=true;
+  if(!wd.daysTrained)wd.daysTrained={};wd.daysTrained[now.getDay()]=true;
   resetTreinoState();
-  save();closeModal('finish-modal');showToast('Treino salvo! 💪');
+  save();closeModal('finish-modal');renderHomeData();showToast('Treino salvo! 💪');
 }
 function skipFinish(){resetTreinoState();save();closeModal('finish-modal');}
 let runDayCtx=null;
