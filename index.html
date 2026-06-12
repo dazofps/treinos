@@ -714,6 +714,27 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
       <button class="modal-cancel" onclick="closeModal('saude-modal')">Cancelar</button>
     </div>
   </div>
+  <!-- RUN MODAL -->
+  <div id="run-modal" class="modal-overlay">
+    <div class="modal-sheet">
+      <h3>🏃 Corrida</h3>
+      <div class="ms-sub" id="run-modal-date" style="margin-bottom:16px"></div>
+      <div class="modal-row">
+        <label>Duração (min)</label>
+        <input class="modal-input" type="number" id="run-dur" min="0" placeholder="Ex: 30">
+      </div>
+      <div class="modal-row">
+        <label>Distância (km)</label>
+        <input class="modal-input" type="number" id="run-km" min="0" step="0.1" placeholder="Ex: 5.0">
+      </div>
+      <div class="modal-row">
+        <label>Calorias queimadas</label>
+        <input class="modal-input" type="number" id="run-cal" min="0" placeholder="Ex: 300">
+      </div>
+      <button class="modal-save" style="margin-top:16px" onclick="saveRun()">Salvar corrida</button>
+      <button class="modal-cancel" onclick="closeModal('run-modal')">Cancelar</button>
+    </div>
+  </div>
   <!-- EDIT LOG MODAL -->
   <div id="edit-log-modal" class="modal-overlay">
     <div class="modal-sheet">
@@ -1037,6 +1058,21 @@ function renderTreinosTab(){
       </div>
     </div>`;
   }).join('');
+  // Running card (always shown)
+  document.getElementById('treino-cards').innerHTML += `<div class="treino-card" onclick="openRunModal()" style="border-color:rgba(251,146,60,.3)">
+    <div class="tc-icon" style="background:rgba(251,146,60,.15);color:#fb923c">🏃</div>
+    <div class="tc-body">
+      <div class="tc-label">Corrida</div>
+      <div class="tc-name">Cardio · Aeróbico</div>
+      <div class="tc-sub" id="run-today-sub">Registrar tempo, km e calorias</div>
+    </div>
+    <div style="font-size:20px;color:var(--muted)">›</div>
+  </div>`;
+  // Update today's run sub
+  const todayISO=new Date().toISOString().slice(0,10);
+  const runsToday=(S.workoutLog||[]).filter(w=>w.treinoId==='run'&&w.dateISO===todayISO);
+  const runSub=document.getElementById('run-today-sub');
+  if(runSub&&runsToday.length>0){const r=runsToday[runsToday.length-1];runSub.textContent='✓ '+[r.dur?r.dur+'min':'',r.km?r.km+'km':'',r.cal?r.cal+' kcal':''].filter(Boolean).join(' · ');}
 }
 function confirmDeleteTreino(id){
   const t=getTreinos().find(t=>t.id===id);
@@ -1199,6 +1235,32 @@ function finishWorkout(){
   save();closeModal('finish-modal');showToast('Treino salvo! 💪');
 }
 function skipFinish(){resetTreinoState();save();closeModal('finish-modal');}
+function openRunModal(){
+  const now=new Date();
+  document.getElementById('run-modal-date').textContent=now.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('run-dur').value='';
+  document.getElementById('run-km').value='';
+  document.getElementById('run-cal').value='';
+  document.getElementById('run-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('run-dur').focus(),150);
+}
+function saveRun(){
+  const dur=parseInt(document.getElementById('run-dur').value)||0;
+  const km=parseFloat(document.getElementById('run-km').value)||0;
+  const cal=parseInt(document.getElementById('run-cal').value)||0;
+  if(!dur&&!km){showToast('Informe ao menos duração ou distância');return;}
+  const now=new Date();
+  const dateISO=now.toISOString().slice(0,10);
+  const focus='Cardio'+( km?' · '+km+'km':'')+(dur?' · '+dur+'min':'');
+  S.workoutLog.unshift({treinoId:'run',label:'Corrida',focus,date:now.toLocaleDateString('pt-BR'),dateISO,dur,km,cal});
+  // Mark day trained & count toward weekly goal
+  const wd=getWD(weekKey(0));
+  if(!wd.done)wd.done={};if(!wd.daysTrained)wd.daysTrained={};
+  wd.done['run_'+dateISO]=true;
+  wd.daysTrained[now.getDay()]=true;
+  save();closeModal('run-modal');renderHomeData();if(typeof renderTreinosTab==='function')renderTreinosTab();
+  showToast('Corrida registrada! 🏃');
+}
 let editLogIdx=-1;
 function openEditLog(idx){
   editLogIdx=idx;
@@ -1237,11 +1299,43 @@ function saveEditLog(){
   log.dur=d;log.cal=c;
   save();closeModal('edit-log-modal');renderReport();showToast('Treino atualizado!');
 }
+function weekKeyForDate(date){
+  const d=new Date(date);const day=d.getDay();const diff=day===0?-6:1-day;
+  d.setDate(d.getDate()+diff);d.setHours(0,0,0,0);return d.toISOString().slice(0,10);
+}
+function weekStartForDate(date){
+  const d=new Date(date);const day=d.getDay();const diff=day===0?-6:1-day;
+  d.setDate(d.getDate()+diff);d.setHours(0,0,0,0);return d;
+}
+function syncAfterDelete(log){
+  if(!log)return;
+  const wk=weekKeyForDate(log.dateISO);
+  const wd=S.weekData[wk];if(!wd)return;
+  // Remove daysTrained if no remaining logs for that day
+  const remaining=S.workoutLog.filter(w=>w.dateISO===log.dateISO);
+  if(remaining.length===0&&wd.daysTrained){
+    const d=new Date(log.dateISO);wd.daysTrained[d.getDay()]=false;
+  }
+  // Remove done[treinoId] if no remaining logs for that treino this week
+  const ws=weekStartForDate(log.dateISO);
+  const we=new Date(ws);we.setDate(we.getDate()+6);
+  const wsISO=ws.toISOString().slice(0,10);const weISO=we.toISOString().slice(0,10);
+  if(log.treinoId==='run'){
+    // For run, each run entry uses run_dateISO key
+    if(wd.done)wd.done['run_'+log.dateISO]=false;
+  } else {
+    const inWeek=S.workoutLog.filter(w=>w.treinoId===log.treinoId&&w.dateISO>=wsISO&&w.dateISO<=weISO);
+    if(inWeek.length===0&&wd.done)wd.done[log.treinoId]=false;
+  }
+}
 function deleteWorkoutLog(i){
   document.getElementById('confirm-modal-title').textContent='Apagar registro';
   document.getElementById('confirm-modal-msg').textContent='Apagar este registro do histórico?';
   document.getElementById('confirm-modal-ok').onclick=()=>{
-    S.workoutLog.splice(i,1);save();renderReport();closeModal('confirm-modal');showToast('Registro apagado.');
+    const log=S.workoutLog[i];
+    S.workoutLog.splice(i,1);
+    syncAfterDelete(log);
+    save();renderReport();renderHomeData();closeModal('confirm-modal');showToast('Registro apagado.');
   };
   document.getElementById('confirm-modal').classList.add('open');
 }
