@@ -19,9 +19,10 @@
   --green:#34d399;--amber:#fbbf24;--red:#f87171;--blue:#60a5fa;--orange:#fb923c;
   --radius:14px;--radius-sm:9px;--radius-xs:6px;
 }
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;touch-action:manipulation}
 html,body{height:100%;width:100%;margin:0;padding:0;background:var(--bg);color:var(--text);font-family:-apple-system,'Segoe UI',sans-serif;font-size:16px;overscroll-behavior:none;overflow:hidden}
-#app{display:flex;flex-direction:column;height:100dvh;width:100%;max-width:480px;position:fixed;top:0;left:50%;transform:translateX(-50%);overflow:hidden}
+input,textarea,select{-webkit-user-select:text;user-select:text;touch-action:auto}
+#app{display:flex;flex-direction:column;height:100dvh;width:100%;max-width:480px;position:fixed;top:0;left:0;right:0;margin:0 auto;overflow:hidden}
 #header{padding:18px 16px 8px;flex-shrink:0}
 #header-row{display:flex;align-items:center;justify-content:space-between}
 #screen-title{font-size:20px;font-weight:700;letter-spacing:-.4px}
@@ -622,6 +623,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
           <span class="sc-icon">🌙</span>
           <div class="sc-label">Sono</div>
           <div class="sc-val" id="sd-sleep">–</div>
+          <div class="sc-sub" id="sd-sleep-times" style="color:var(--accent);font-size:11px;margin-top:2px"></div>
           <div class="sc-sub" id="sd-sleep-meta">meta: 8h</div>
           <div class="saude-prog-wrap"><div class="saude-prog-fill" id="sd-sleep-bar" style="background:var(--accent);width:0%"></div></div>
         </div>
@@ -697,6 +699,24 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
     </div>
   </div>
 
+  <!-- SLEEP MODAL -->
+  <div id="sleep-modal" class="modal-overlay">
+    <div class="modal-sheet">
+      <h3>🌙 Registrar Sono</h3>
+      <div class="ms-sub" id="sleep-modal-date" style="margin-bottom:16px"></div>
+      <div class="modal-row">
+        <label>Hora que foi dormir</label>
+        <input class="modal-input" type="time" id="sleep-bedtime" value="22:30" oninput="updateSleepPreview()">
+      </div>
+      <div class="modal-row">
+        <label>Hora que acordou</label>
+        <input class="modal-input" type="time" id="sleep-waketime" value="06:30" oninput="updateSleepPreview()">
+      </div>
+      <div id="sleep-duration-preview" style="text-align:center;font-size:22px;font-weight:700;color:var(--accent);margin:14px 0 4px;letter-spacing:-0.5px"></div>
+      <button class="modal-save" onclick="saveSleepModal()">Salvar</button>
+      <button class="modal-cancel" onclick="closeModal('sleep-modal')">Cancelar</button>
+    </div>
+  </div>
   <div id="saude-modal" class="modal-overlay">
     <div class="modal-sheet">
       <h3 id="saude-modal-title">Registrar</h3>
@@ -712,6 +732,25 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
       </div>
       <button class="modal-save" onclick="saveSaudeModal()">Salvar</button>
       <button class="modal-cancel" onclick="closeModal('saude-modal')">Cancelar</button>
+    </div>
+  </div>
+  <!-- MANUAL LOG MODAL -->
+  <div id="manual-log-modal" class="modal-overlay">
+    <div class="modal-sheet">
+      <h3 id="mlm-title"></h3>
+      <div class="ms-sub" id="mlm-date" style="margin-bottom:14px"></div>
+      <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600;margin-bottom:8px">Exercícios realizados</div>
+      <div id="mlm-exs" style="margin-bottom:14px"></div>
+      <div class="modal-row">
+        <label>Duração (min)</label>
+        <input class="modal-input" type="number" id="mlm-dur" min="0" max="300" placeholder="Ex: 45">
+      </div>
+      <div class="modal-row">
+        <label>Calorias queimadas</label>
+        <input class="modal-input" type="number" id="mlm-cal" min="0" placeholder="Ex: 300">
+      </div>
+      <button class="modal-save" style="margin-top:16px" onclick="saveManualLog()">Salvar treino</button>
+      <button class="modal-cancel" onclick="closeModal('manual-log-modal')">Cancelar</button>
     </div>
   </div>
   <!-- RUN MODAL -->
@@ -934,7 +973,7 @@ function clickDay(i){
     const treinos = getTreinos();
     const dateFormatted=d.toLocaleDateString('pt-BR');
     const treinoOpts = treinos.map(t=>
-      `<button class="dm-manual-btn" style="margin-bottom:6px;text-align:left;display:block;width:100%" onclick="setManualDayWithTreino(${i},'${t.id}')">${t.label} — ${t.focus}</button>`
+      `<button class="dm-manual-btn" style="margin-bottom:6px;text-align:left;display:block;width:100%" onclick="closeModal('day-modal');openManualLogModal(${i},'${t.id}')">${t.label} — ${t.focus}</button>`
     ).join('');
     const runBtn=`<button class="dm-manual-btn" style="margin-bottom:6px;text-align:left;display:block;width:100%;border-color:rgba(251,146,60,.4);color:#fb923c" onclick="closeModal('day-modal');openRunModal({dayIdx:${i},dateISO:'${dateISO}',dateFormatted:'${dateFormatted}'})">🏃 Corrida — Cardio · Aeróbico</button>`;
     body=`
@@ -967,6 +1006,45 @@ function setManualDay(i,v){
   closeModal('day-modal');
 }
 
+let mlmDayIdx=-1,mlmTreinoId='',mlmExDone={};
+function openManualLogModal(dayIdx, treinoId){
+  mlmDayIdx=dayIdx;mlmTreinoId=treinoId;mlmExDone={};
+  const t=getTreinos().find(t=>t.id===treinoId);
+  const ws=weekStart(weekOff);const d=new Date(ws);d.setDate(ws.getDate()+dayIdx);
+  const dateStr=d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('mlm-title').textContent=t.label;
+  document.getElementById('mlm-date').textContent=dateStr.charAt(0).toUpperCase()+dateStr.slice(1)+' · '+t.focus;
+  document.getElementById('mlm-dur').value='';
+  document.getElementById('mlm-cal').value='';
+  document.getElementById('mlm-exs').innerHTML=t.exercicios.map(ex=>`
+    <div class="dm-ex-row" onclick="toggleMlmEx('${ex.id}')" style="cursor:pointer">
+      <div class="dm-ex-check" id="mlmchk-${ex.id}"></div>
+      <div><div class="dm-ex-name">${ex.nome}</div><div class="dm-ex-meta">${ex.series}×${ex.reps}</div></div>
+    </div>`).join('');
+  document.getElementById('manual-log-modal').classList.add('open');
+}
+function toggleMlmEx(exId){
+  mlmExDone[exId]=!mlmExDone[exId];
+  const chk=document.getElementById('mlmchk-'+exId);
+  if(chk){chk.className='dm-ex-check'+(mlmExDone[exId]?' done':'');chk.innerHTML=mlmExDone[exId]?ckSVG():'';}
+}
+function saveManualLog(){
+  const dur=parseInt(document.getElementById('mlm-dur').value)||0;
+  const cal=parseInt(document.getElementById('mlm-cal').value)||0;
+  const wd=getWD(weekKey(weekOff));
+  if(!wd.daysTrained)wd.daysTrained={};
+  wd.daysTrained[mlmDayIdx]=true;
+  const ws=weekStart(weekOff);const d=new Date(ws);d.setDate(ws.getDate()+mlmDayIdx);
+  const dateISO=d.toISOString().slice(0,10);
+  const dateFormatted=d.toLocaleDateString('pt-BR');
+  const t=getTreinos().find(t=>t.id===mlmTreinoId);
+  S.workoutLog=S.workoutLog.filter(w=>!(w.dateISO===dateISO&&w.treinoId===mlmTreinoId&&w.manual));
+  S.workoutLog.push({treinoId:mlmTreinoId,label:t.label,focus:t.focus,date:dateFormatted,dateISO,dur,cal,exDone:{...mlmExDone},manual:true});
+  S.workoutLog.sort((a,b)=>b.dateISO.localeCompare(a.dateISO));
+  if(!wd.done)wd.done={};wd.done[mlmTreinoId]=true;
+  save();closeModal('manual-log-modal');renderWeekNav();renderHomeData();
+  showToast(t.label+' registrado! 💪');
+}
 function setManualDayWithTreino(dayIdx, treinoId){
   const wd=getWD(weekKey(weekOff));
   if(!wd.daysTrained)wd.daysTrained={};
@@ -1151,7 +1229,7 @@ function renderExList(){
     if(!wd._finishShown) {
       if(!wd.done)wd.done={};
       wd.done[curTid]=true;
-      if(!wd.daysTrained)wd.daysTrained={};wd.daysTrained[new Date().getDay()]=true;
+      if(!wd.daysTrained)wd.daysTrained={};wd.daysTrained[displayDayIdx(new Date())]=true;
       wd._finishShown=true; save();
       document.getElementById('finish-dur').value='';
       document.getElementById('finish-cal').value='';
@@ -1240,7 +1318,7 @@ function finishWorkout(){
   // Guarantee meta semanal & daysTrained are updated
   const wd=getWD(weekKey(0));
   if(!wd.done)wd.done={};wd.done[curTid]=true;
-  if(!wd.daysTrained)wd.daysTrained={};wd.daysTrained[now.getDay()]=true;
+  if(!wd.daysTrained)wd.daysTrained={};wd.daysTrained[displayDayIdx(now)]=true;
   resetTreinoState();
   save();closeModal('finish-modal');renderHomeData();showToast('Treino salvo! 💪');
 }
@@ -1264,11 +1342,12 @@ function saveRun(){
   let dateISO,dateFormatted,dayOfWeek,wk;
   if(runDayCtx){
     dateISO=runDayCtx.dateISO;dateFormatted=runDayCtx.dateFormatted;
-    const d=new Date(dateISO);dayOfWeek=d.getDay();wk=weekKeyForDate(d);
+    dayOfWeek=runDayCtx.dayIdx; // week display index (0=Mon) — matches daysTrained
+    wk=weekKeyForDate(dateISO); // uses local date parsing to avoid UTC-3 shift
   } else {
-    const now=new Date();dateISO=now.toISOString().slice(0,10);dateFormatted=now.toLocaleDateString('pt-BR');dayOfWeek=now.getDay();wk=weekKey(0);
+    const now=new Date();dateISO=now.toISOString().slice(0,10);dateFormatted=now.toLocaleDateString('pt-BR');dayOfWeek=displayDayIdx(now);wk=weekKey(0);
   }
-  const focus='Cardio'+(km?' · '+km+'km':'')+(dur?' · '+dur+'min':'');
+  const focus='Cardio'+(km?' · '+km+'km':''); // dur/cal shown separately in report
   S.workoutLog=S.workoutLog.filter(w=>!(w.dateISO===dateISO&&w.treinoId==='run'&&w.manual));
   S.workoutLog.push({treinoId:'run',label:'Corrida',focus,date:dateFormatted,dateISO,dur,km,cal,manual:!!runDayCtx});
   S.workoutLog.sort((a,b)=>b.dateISO.localeCompare(a.dateISO));
@@ -1317,13 +1396,19 @@ function saveEditLog(){
   log.dur=d;log.cal=c;
   save();closeModal('edit-log-modal');renderReport();showToast('Treino atualizado!');
 }
-function weekKeyForDate(date){
-  const d=new Date(date);const day=d.getDay();const diff=day===0?-6:1-day;
-  d.setDate(d.getDate()+diff);d.setHours(0,0,0,0);return d.toISOString().slice(0,10);
+function isoToLocal(iso){const[y,m,d]=iso.split('-').map(Number);return new Date(y,m-1,d);}
+// Week display index: 0=Mon..6=Sun (matches the 7-day loop in renderHomeMeta/renderWeekNav)
+function displayDayIdx(d){return(d.getDay()+6)%7;}
+function weekKeyForDate(dateOrISO){
+  const d=typeof dateOrISO==='string'?isoToLocal(dateOrISO):new Date(dateOrISO);
+  const diff=displayDayIdx(d)===0?0:-displayDayIdx(d);
+  const mon=new Date(d);mon.setDate(d.getDate()+diff);mon.setHours(0,0,0,0);
+  return mon.toISOString().slice(0,10);
 }
-function weekStartForDate(date){
-  const d=new Date(date);const day=d.getDay();const diff=day===0?-6:1-day;
-  d.setDate(d.getDate()+diff);d.setHours(0,0,0,0);return d;
+function weekStartForDate(dateOrISO){
+  const d=typeof dateOrISO==='string'?isoToLocal(dateOrISO):new Date(dateOrISO);
+  const diff=displayDayIdx(d)===0?0:-displayDayIdx(d);
+  const mon=new Date(d);mon.setDate(d.getDate()+diff);mon.setHours(0,0,0,0);return mon;
 }
 function syncAfterDelete(log){
   if(!log)return;
@@ -1332,7 +1417,7 @@ function syncAfterDelete(log){
   // Remove daysTrained if no remaining logs for that day
   const remaining=S.workoutLog.filter(w=>w.dateISO===log.dateISO);
   if(remaining.length===0&&wd.daysTrained){
-    const d=new Date(log.dateISO);wd.daysTrained[d.getDay()]=false;
+    const d=isoToLocal(log.dateISO);wd.daysTrained[displayDayIdx(d)]=false;
   }
   // Remove done[treinoId] if no remaining logs for that treino this week
   const ws=weekStartForDate(log.dateISO);
@@ -1627,7 +1712,11 @@ function renderSaude(){
   document.getElementById('sd-steps-meta').textContent='meta: '+stepsGoal.toLocaleString('pt-BR');
   document.getElementById('sd-steps-bar').style.width=Math.min(100,sd.steps/stepsGoal*100)+'%';
   const sleepGoal=S.settings.sleepGoal||8;const sleepH=sd.sleep?sd.sleep.hours:null;
-  document.getElementById('sd-sleep').innerHTML=(sleepH!==null?sleepH+'h':'–');
+  const sleepMins=sleepH?Math.round(sleepH*60):null;
+  const sleepLabel=sleepMins?(Math.floor(sleepMins/60)+'h'+(sleepMins%60?' '+sleepMins%60+'m':'')):'–';
+  document.getElementById('sd-sleep').innerHTML=sleepLabel;
+  const timesEl=document.getElementById('sd-sleep-times');
+  if(timesEl)timesEl.textContent=sd.sleep&&sd.sleep.bedtime?sd.sleep.bedtime+' → '+sd.sleep.waketime:'';
   document.getElementById('sd-sleep-meta').textContent='meta: '+sleepGoal+'h';
   document.getElementById('sd-sleep-bar').style.width=sleepH?Math.min(100,sleepH/sleepGoal*100)+'%':'0%';
   const waterGoal=S.settings.waterGoal||2000;
@@ -1642,12 +1731,48 @@ function renderSaude(){
   renderFsMeals(sd,dateISO);renderSaudeHist();setFsMeal(fsMeal);
 }
 function changeSaudeDate(dir){if(saudeOff+dir>0)return;saudeOff+=dir;document.getElementById('fs-results').innerHTML='';renderSaude();}
+function calcSleepHours(bed,wake){
+  // bed and wake are "HH:MM" strings; wake can be next day
+  const [bh,bm]=bed.split(':').map(Number);
+  const [wh,wm]=wake.split(':').map(Number);
+  let mins=(wh*60+wm)-(bh*60+bm);
+  if(mins<=0)mins+=24*60; // crossed midnight
+  return mins;
+}
+function updateSleepPreview(){
+  const bed=document.getElementById('sleep-bedtime').value;
+  const wake=document.getElementById('sleep-waketime').value;
+  if(!bed||!wake){document.getElementById('sleep-duration-preview').textContent='';return;}
+  const mins=calcSleepHours(bed,wake);
+  const h=Math.floor(mins/60),m=mins%60;
+  document.getElementById('sleep-duration-preview').textContent=(h?h+'h ':'')+(m?m+'min':'');
+}
+function openSleepModal(){
+  const sd=getSaudeData(saudeDateKey(saudeOff));
+  const d=new Date(saudeDateKey(saudeOff)+'T12:00:00');
+  document.getElementById('sleep-modal-date').textContent=
+    saudeOff===0?'Hoje':saudeOff===-1?'Ontem':d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('sleep-bedtime').value=sd.sleep&&sd.sleep.bedtime?sd.sleep.bedtime:'22:30';
+  document.getElementById('sleep-waketime').value=sd.sleep&&sd.sleep.waketime?sd.sleep.waketime:'06:30';
+  updateSleepPreview();
+  document.getElementById('sleep-modal').classList.add('open');
+}
+function saveSleepModal(){
+  const bed=document.getElementById('sleep-bedtime').value;
+  const wake=document.getElementById('sleep-waketime').value;
+  if(!bed||!wake){showToast('Preencha os dois horários');return;}
+  const mins=calcSleepHours(bed,wake);
+  const hours=parseFloat((mins/60).toFixed(1));
+  const sd=getSaudeData(saudeDateKey(saudeOff));
+  sd.sleep={bedtime:bed,waketime:wake,hours};
+  save();closeModal('sleep-modal');renderSaude();showToast('Sono registrado!');
+}
 function editSaude(type){
   saudeModalType=type;const sd=getSaudeData(saudeDateKey(saudeOff));
   const title=document.getElementById('saude-modal-title');const label=document.getElementById('saude-modal-label');const input=document.getElementById('saude-modal-input');
   document.getElementById('saude-modal-extra').style.display='none';
   if(type==='steps'){title.textContent='Registrar passos';label.textContent='Passos';input.value=sd.steps||'';input.min=0;input.max=100000;input.step=100;}
-  else if(type==='sleep'){title.textContent='Registrar sono';label.textContent='Horas dormidas';input.value=sd.sleep?sd.sleep.hours:'';input.min=0;input.max=24;input.step=0.5;}
+  else if(type==='sleep'){openSleepModal();return;}
   else if(type==='water'){title.textContent='Registrar água';label.textContent='Quantidade (ml)';input.value=sd.water||'';input.min=0;input.max=10000;input.step=250;}
   document.getElementById('saude-modal').classList.add('open');setTimeout(()=>input.focus(),150);
 }
@@ -1701,7 +1826,8 @@ function renderSaudeHist(){
     const dateISO=saudeDateKey(-i);const d=new Date(dateISO);const sd=S.saudeLog[dateISO];
     if(!sd||(!sd.steps&&!sd.water&&!sd.sleep&&(!sd.meals||!sd.meals.length)))continue;
     const lbl=i===0?'Hoje':i===1?'Ontem':d.toLocaleDateString('pt-BR',{weekday:'short',day:'numeric'});
-    html+=`<div class="saude-hist-item"><span style="font-weight:500">${lbl}</span><span style="color:var(--muted);font-size:12px">${sd.steps?'👟'+sd.steps.toLocaleString('pt-BR')+' ':''}${sd.water?'💧'+sd.water+'ml ':''}${sd.sleep?'🌙'+sd.sleep.hours+'h':''}</span></div>`;
+    const sleepTxt=sd.sleep?(sd.sleep.bedtime?'🌙'+sd.sleep.bedtime+'→'+sd.sleep.waketime:sd.sleep.hours?'🌙'+sd.sleep.hours+'h':''):'';
+    html+=`<div class="saude-hist-item"><span style="font-weight:500">${lbl}</span><span style="color:var(--muted);font-size:12px">${sd.steps?'👟'+sd.steps.toLocaleString('pt-BR')+' ':''}${sd.water?'💧'+sd.water+'ml ':''} ${sleepTxt}</span></div>`;
   }
   document.getElementById('saude-hist-list').innerHTML=html||'<div style="font-size:13px;color:var(--muted)">Nenhum registro nos últimos 7 dias.</div>';
 }
