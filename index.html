@@ -779,14 +779,12 @@ const DT=[
     {id:'a7',nome:'Prancha abdominal',series:3,reps:'30–45 seg',musculo:'Core',passos:['Apoie nos antebraços e nas pontas dos pés, corpo em linha reta','Quadril alinhado com os ombros — nem muito alto nem muito baixo','Contraia o abdômen como se fosse levar um soco, respire normalmente','Se tremer muito, caia no joelho — melhor que perder a forma']},
     {id:'a8',nome:'Abdominal',series:3,reps:'15',musculo:'Abdômen',passos:['Deite de costas, joelhos dobrados, pés no chão','Mãos atrás da cabeça sem puxar o pescoço, ou cruzadas no peito','Suba contraindo o abdômen até os ombros saírem do chão','Desça lento, sem encostar completamente antes da próxima rep']}
   ]},
-  {id:'b',label:'Treino B',focus:'Costas · Bíceps · Abs',icon:'B',exercicios:[
+  {id:'b',label:'Treino B',focus:'Costas · Bíceps',icon:'B',exercicios:[
     {id:'b1',nome:'Puxada frontal na polia',series:3,reps:'12',musculo:'Costas (latíssimo)',passos:['Sente no aparelho, fixe os joelhos sob o apoio, pegada aberta (mais larga que ombros)','Incline levemente o tronco para trás, peito para cima','Puxe a barra até a frente do peito, cotovelos apontando para baixo e para trás','Suba controlado, estendendo bem os braços antes da próxima repetição']},
     {id:'b2',nome:'Remada curvada com halteres',series:3,reps:'12',musculo:'Costas média',passos:['Em pé, incline o tronco a ~45°, joelhos levemente dobrados, costas retas','Halteres pendurados, braços estendidos abaixo do peito','Puxe em direção ao umbigo, cotovelos raspando as laterais do tronco','Contraia as escápulas no topo, desça lento']},
     {id:'b3',nome:'Remada baixa na polia',series:3,reps:'12',musculo:'Costas / bíceps',passos:['Sente no aparelho, pés no apoio, joelhos levemente dobrados','Tronco ereto — não se jogue para trás durante o movimento','Puxe o triângulo até o abdômen, cotovelos para trás','Estenda os braços completamente antes de cada repetição']},
     {id:'b4',nome:'Rosca direta com barra',series:3,reps:'12',musculo:'Bíceps',passos:['Em pé, pegada na barra com palmas para cima, cotovelos colados ao tronco','Suba a barra em arco até os ombros — só o antebraço se move','Contraia o bíceps no topo por 1 segundo','Desça lento (2 segundos) — não jogue a barra para baixo']},
-    {id:'b5',nome:'Rosca martelo',series:3,reps:'12',musculo:'Bíceps / braquial',passos:['Em pé, halteres nas laterais, palmas voltadas para o corpo (neutro)','Suba um halter de cada vez ou os dois juntos, cotovelos parados','A palma continua voltada para dentro durante todo o movimento','Desça controlado, alternando os braços se preferir']},
-    {id:'b6',nome:'Prancha abdominal',series:3,reps:'30–45 seg',musculo:'Core',passos:['Apoie nos antebraços e nas pontas dos pés, corpo em linha reta','Quadril alinhado com os ombros','Contraia o abdômen, respire normalmente','Se tremer muito, caia no joelho']},
-    {id:'b7',nome:'Abdominal',series:3,reps:'15',musculo:'Abdômen',passos:['Deite de costas, joelhos dobrados, pés no chão','Mãos atrás da cabeça sem puxar o pescoço, ou cruzadas no peito','Suba contraindo o abdômen até os ombros saírem do chão','Desça lento, sem encostar completamente antes da próxima rep']}
+    {id:'b5',nome:'Rosca martelo',series:3,reps:'12',musculo:'Bíceps / braquial',passos:['Em pé, halteres nas laterais, palmas voltadas para o corpo (neutro)','Suba um halter de cada vez ou os dois juntos, cotovelos parados','A palma continua voltada para dentro durante todo o movimento','Desça controlado, alternando os braços se preferir']}
   ]},
   {id:'c',label:'Treino C',focus:'Pernas · Glúteos',icon:'C',exercicios:[
     {id:'c1',nome:'Agachamento livre ou no Smith',series:4,reps:'12',musculo:'Quadríceps · Glúteos',passos:['Pés na largura dos ombros, levemente abertos para fora (30°)','Barra no trapézio (parte alta das costas, não no pescoço)','Desça como se fosse sentar numa cadeira — joelhos seguem a direção dos pés','Desça até as coxas ficarem paralelas ao chão ou até onde conseguir sem dor','Suba empurrando o chão, contraindo glúteos no topo']},
@@ -912,12 +910,16 @@ function clickDay(i){
       body+='</div>';
     });
   } else {
-    body=`<div style="font-size:13px;color:var(--muted);margin-bottom:16px">Nenhum treino registrado neste dia.</div>
-    <div style="font-size:13px;margin-bottom:10px;color:var(--text)">Marcar como dia treinado?</div>
-    <div class="dm-manual-row">
-      <button class="dm-manual-btn ${!trained?'active':''}" onclick="setManualDay(${i},false)">Não treinei</button>
-      <button class="dm-manual-btn ${trained?'active':''}" id="dm-train-btn" onclick="setManualDay(${i},true)">Treinei ✓</button>
-    </div>`;
+    const treinos = getTreinos();
+    const treinoOpts = treinos.map(t=>
+      `<button class="dm-manual-btn" style="margin-bottom:6px;text-align:left;display:block;width:100%" onclick="setManualDayWithTreino(${i},'${t.id}')">${t.label} — ${t.focus}</button>`
+    ).join('');
+    body=`
+    <div style="font-size:13px;color:var(--muted);margin-bottom:12px">Nenhum treino registrado neste dia.</div>
+    ${trained?`<div style="font-size:13px;color:var(--green);margin-bottom:12px;font-weight:500">✓ Marcado como treinado</div>`:''}
+    <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:10px">Qual treino foi feito?</div>
+    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">${treinoOpts}</div>
+    <button class="dm-manual-btn" style="color:var(--muted);border-color:rgba(255,255,255,.08)" onclick="setManualDay(${i},false)">✕ Não treinei neste dia</button>`;
   }
   document.getElementById('day-modal-title').textContent=dateStr.charAt(0).toUpperCase()+dateStr.slice(1);
   document.getElementById('day-modal-sub').textContent=trained&&logs.length>0?'Treino realizado ✓':trained?'Marcado manualmente':'Dia sem treino';
@@ -925,11 +927,46 @@ function clickDay(i){
   document.getElementById('day-modal').classList.add('open');
 }
 function setManualDay(i,v){
+  // Mark as not trained — remove any manual log for this day
   const wd=getWD(weekKey(weekOff));
   if(!wd.daysTrained)wd.daysTrained={};
-  wd.daysTrained[i]=v;save();renderWeekNav();
-  document.getElementById('day-modal-sub').textContent=v?'Marcado manualmente':'Dia sem treino';
-  document.querySelectorAll('.dm-manual-btn').forEach((b,idx)=>b.className='dm-manual-btn'+(idx===(v?1:0)?' active':''));
+  wd.daysTrained[i]=v;
+  if(!v){
+    // Remove manual workout log for this day if exists
+    const ws=weekStart(weekOff);
+    const d=new Date(ws);d.setDate(ws.getDate()+i);
+    const dateISO=d.toISOString().slice(0,10);
+    const before=S.workoutLog.length;
+    S.workoutLog=S.workoutLog.filter(w=>!(w.dateISO===dateISO&&w.manual));
+    if(S.workoutLog.length!==before) renderHomeData();
+  }
+  save();renderWeekNav();renderHomeData();
+  closeModal('day-modal');
+}
+
+function setManualDayWithTreino(dayIdx, treinoId){
+  const wd=getWD(weekKey(weekOff));
+  if(!wd.daysTrained)wd.daysTrained={};
+  wd.daysTrained[dayIdx]=true;
+  // Add to workout log
+  const ws=weekStart(weekOff);
+  const d=new Date(ws);d.setDate(ws.getDate()+dayIdx);
+  const dateISO=d.toISOString().slice(0,10);
+  const dateFormatted=d.toLocaleDateString('pt-BR');
+  const t=getTreinos().find(t=>t.id===treinoId);
+  // Remove any previous manual entry for same day+treino
+  S.workoutLog=S.workoutLog.filter(w=>!(w.dateISO===dateISO&&w.treinoId===treinoId&&w.manual));
+  S.workoutLog.push({treinoId,label:t.label,focus:t.focus,date:dateFormatted,dateISO,dur:0,cal:0,manual:true});
+  // Sort log by date descending
+  S.workoutLog.sort((a,b)=>b.dateISO.localeCompare(a.dateISO));
+  // Also count toward weekly done
+  if(!wd.done)wd.done={};
+  wd.done[treinoId]=true;
+  save();
+  renderWeekNav();
+  renderHomeData();
+  closeModal('day-modal');
+  showToast(t.label+' registrado! 💪');
 }
 
 // ── HOME ─────────────────────────────────────────────────
