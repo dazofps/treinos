@@ -271,7 +271,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
 .saude-prog-wrap{background:var(--bg3);border-radius:3px;height:6px;margin-top:10px;overflow:hidden}
 .saude-prog-fill{height:100%;border-radius:3px;transition:width .4s ease}
 /* water buttons */
-/* water-btn moved below */
+.water-btn.water-minus{background:var(--bg3);border:0.5px solid var(--border2);color:var(--muted)}
+.water-btn.water-plus{background:rgba(96,165,250,.15);border:0.5px solid rgba(96,165,250,.3);color:var(--blue)}
 /* history card */
 .saude-hist-item{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:0.5px solid var(--border);font-size:13px}
 .saude-hist-item:last-child{border-bottom:none}
@@ -313,6 +314,12 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
 .water-plus{background:rgba(96,165,250,.2);color:var(--blue)}
 .water-btn:active{opacity:.75}
 .fs-search-btn{background:var(--accent2);color:white;border:none;border-radius:var(--radius-sm);padding:10px 14px;font-size:14px;font-weight:600;cursor:pointer;flex-shrink:0;white-space:nowrap}
+.fs-results{margin-bottom:12px}
+.fs-result-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius-sm);margin-bottom:6px;cursor:pointer;transition:background .15s}
+.fs-result-item:active{background:var(--bg3)}
+.tc-actions{display:flex;gap:6px;flex-shrink:0;align-items:center}
+.tc-act-btn{background:var(--bg3);border:0.5px solid var(--border2);border-radius:var(--radius-xs);padding:6px 9px;color:var(--muted);font-size:14px;cursor:pointer;line-height:1}
+.tc-act-btn.danger:active{color:var(--red)}
 /* ── TREINO CARD MENU ── */
 .tc-actions{display:flex;flex-direction:column;gap:3px;flex-shrink:0;margin-left:6px}
 .tc-act-btn{background:none;border:none;border-radius:var(--radius-xs);width:26px;height:26px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;opacity:.6}
@@ -1206,38 +1213,118 @@ function finishWorkout(){
   resetTreinoState();
   save();closeModal('finish-modal');showToast('Treino salvo! 💪');
 }
-function skipFinish(){
-  resetTreinoState();
-  save();closeModal('finish-modal');
-}
+function skipFinish(){resetTreinoState();save();closeModal('finish-modal');}
 function deleteWorkoutLog(i){
   document.getElementById('confirm-modal-title').textContent='Apagar registro';
   document.getElementById('confirm-modal-msg').textContent='Apagar este registro do histórico?';
   document.getElementById('confirm-modal-ok').onclick=()=>{
-    closeModal('confirm-modal');
-    S.workoutLog.splice(i,1);
-    save(); renderReport(); renderHomeData(); showToast('Registro apagado.');
+    S.workoutLog.splice(i,1);save();renderReport();closeModal('confirm-modal');showToast('Registro apagado.');
   };
   document.getElementById('confirm-modal').classList.add('open');
 }
-function encerrarTreino(){
-  document.getElementById('finish-dur').value='';
-  document.getElementById('finish-cal').value='';
-  document.getElementById('finish-modal').classList.add('open');
-}
-function resetTreinoState(){
-  const wd=getWD(weekKey(0));
-  const t=getTreinos().find(tr=>tr.id===curTid);
-  if(t&&wd.exDone) t.exercicios.forEach(e=>{ delete wd.exDone[e.id]; });
-  if(t&&wd.seriesDone) t.exercicios.forEach(e=>{ delete wd.seriesDone[e.id]; });
-  wd._finishShown=false;
+
+function resetTreinoState(){curTid=null;}
+function wtAdjust(m){}
+function openEditor(id){showTab('settings');setTimeout(()=>{openSetting('exedit');setTimeout(()=>setEditTreino(id),50);},50);}
+
+// ── GET TREINOS ──────────────────────────────────────────
+function getTreinos(){
+  let base=S.treinosList?S.treinosList.map(id=>DT.find(t=>t.id===id)).filter(Boolean):JSON.parse(JSON.stringify(DT));
+  if(!S.customTreinos)return base;
+  return base.map(t=>{const ct=S.customTreinos[t.id]||{};return{...t,label:ct.label||t.label,focus:ct.focus||t.focus,exercicios:t.exercicios.map(ex=>{const ce=ct.exercicios&&ct.exercicios[ex.id];return ce?{...ex,series:ce.series??ex.series,reps:ce.reps??ex.reps}:ex;})};});
 }
 
-// ── WEIGHT ───────────────────────────────────────────────
+// ── NAVIGATION ───────────────────────────────────────────
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
+function setHeader(t,s){document.getElementById('screen-title').textContent=t;document.getElementById('screen-sub').textContent=s||'';}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function showToast(msg){
+  let t=document.getElementById('toast');
+  if(!t){t=document.createElement('div');t.id='toast';t.style.cssText='position:fixed;bottom:85px;left:50%;transform:translateX(-50%);background:#1e1e1e;border:0.5px solid rgba(255,255,255,.15);color:#f1f0f5;padding:9px 18px;border-radius:20px;font-size:13px;z-index:999;transition:opacity .3s;white-space:nowrap';document.body.appendChild(t);}
+  t.textContent=msg;t.style.opacity='1';clearTimeout(t._t);t._t=setTimeout(()=>{t.style.opacity='0';},2200);
+}
+function showTab(tab){
+  document.querySelectorAll('#bottom-nav button').forEach(b=>b.classList.remove('active'));
+  const nb=document.getElementById('nav-'+tab);if(nb)nb.classList.add('active');
+  const ss=document.getElementById('sub-settings');if(ss)ss.style.display='none';
+  if(tab==='home'){
+    showScreen('home-screen');const n=S.profile.nome;
+    setHeader(n?'Olá, '+n.split(' ')[0]:'Meu Treino','Bem-vindo');
+    weekOff=0;renderHomeData();
+  } else if(tab==='treinos'){
+    showScreen('treinos-screen');setHeader('Treinos','Selecione e comece');renderTreinosTab();
+  } else if(tab==='report'){
+    showScreen('report-screen');setHeader('Relatório','Seu progresso');reportWeekOff=0;renderReport();
+  } else if(tab==='saude'){
+    showScreen('saude-screen');setHeader('Saúde','Bem-estar diário');saudeOff=0;renderSaude();
+  } else if(tab==='settings'){
+    showScreen('settings-screen');setHeader('Configurações','Personalizar');
+    document.getElementById('wakelock-toggle').checked=!!S.settings.wakeLock;
+    document.getElementById('rest-desc').textContent=fmtT(S.settings.restSecs)+' entre séries';
+    document.getElementById('goal-desc').textContent=S.settings.weekGoal+' treinos por semana';
+    const p=S.profile;document.getElementById('profile-desc').textContent=p.nome?p.nome+(p.altura?' · '+p.altura+'cm':''):'Nome, idade, altura, peso...';
+    if(ss)ss.style.display='none';profSexo=p.sexo||'';
+  }
+}
+
+// ── REPORT ───────────────────────────────────────────────
+function renderReport(){
+  renderReportWeekNav();
+  const wl=S.weightLog||[];
+  if(wl.length>0){
+    document.getElementById('weight-stats-row').style.display='flex';
+    document.getElementById('ws-atual').textContent=wl[0].val+' kg';
+    document.getElementById('ws-max').textContent=Math.max(...wl.map(w=>w.val))+' kg';
+    document.getElementById('ws-min').textContent=Math.min(...wl.map(w=>w.val))+' kg';
+    document.getElementById('ws-meta').textContent=S.profile.pesoMeta?S.profile.pesoMeta+' kg':'–';
+  } else document.getElementById('weight-stats-row').style.display='none';
+  drawChart();
+  document.getElementById('weight-hist').innerHTML=wl.length?wl.slice(0,8).map((w,i)=>{
+    const prev=wl[i+1];const diff=prev?parseFloat((w.val-prev.val).toFixed(1)):null;
+    const dH=diff===null?'':`<span class="wh-diff ${diff>0?'up':diff<0?'down':'same'}">${diff>0?'+':''}${diff} kg</span>`;
+    return `<div class="weight-hist-row"><div><div class="wh-val">${w.val} kg</div><div class="wh-date">${w.date}</div></div>${dH}</div>`;
+  }).join(''):'<div style="font-size:13px;color:var(--muted);padding:4px 0">Nenhum registro ainda.</div>';
+  const wlog=S.workoutLog||[];
+  document.getElementById('wlog-list').innerHTML=wlog.length?wlog.slice(0,10).map((w,i)=>`
+    <div class="wlog-item"><div><div class="wl-name">${w.label}</div><div class="wl-meta">${w.focus} · ${w.date}</div></div>
+      <div style="display:flex;align-items:center;gap:8px">${w.dur?`<div class="wl-dur">${w.dur}min</div>`:''}
+        <button onclick="deleteWorkoutLog(${i})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:2px 4px;line-height:1">✕</button>
+      </div></div>`).join(''):'<div style="font-size:13px;color:var(--muted);padding:4px 0">Nenhum treino registrado ainda.</div>';
+  renderBMI();
+}
+function changeReportWeek(dir){if(reportWeekOff+dir>0)return;reportWeekOff+=dir;document.getElementById('report-day-detail').style.display='none';renderReportWeekNav();}
+function renderReportWeekNav(){
+  const ws=weekStart(reportWeekOff),we=new Date(ws);we.setDate(we.getDate()+6);
+  const lbl=reportWeekOff===0?'Esta semana':reportWeekOff===-1?'Semana passada':ws.getDate()+' '+MN[ws.getMonth()]+' – '+we.getDate()+' '+MN[we.getMonth()];
+  document.getElementById('report-week-label').textContent=lbl;
+  document.getElementById('report-wn-next').className='wn-btn'+(reportWeekOff>=0?' disabled':'');
+  const today=new Date();today.setHours(0,0,0,0);const wd=getWD(weekKey(reportWeekOff));
+  let html='';
+  for(let i=0;i<7;i++){
+    const d=new Date(ws);d.setDate(ws.getDate()+i);
+    const isT=d.getTime()===today.getTime();const trained=!!(wd.daysTrained&&wd.daysTrained[i]);
+    html+=`<div onclick="showReportDay(${i})" style="border-radius:6px;border:0.5px solid ${isT?'var(--accent)':trained?'rgba(52,211,153,.3)':'var(--border)'};background:${trained?'rgba(52,211,153,.1)':'transparent'};display:flex;flex-direction:column;align-items:center;padding:7px 2px 6px;cursor:pointer">
+      <span style="font-size:9px;color:${isT?'var(--accent)':'var(--muted)'};text-transform:uppercase;margin-bottom:4px">${DL[d.getDay()].slice(0,1)}</span>
+      <span style="font-size:14px;font-weight:600;color:${trained?'var(--green)':isT?'var(--accent)':'var(--text)'}">${d.getDate()}</span>
+      <span style="width:4px;height:4px;border-radius:50%;background:var(--green);margin-top:4px;opacity:${trained?1:0}"></span></div>`;
+  }
+  document.getElementById('report-week-days').innerHTML=html;
+  document.getElementById('report-day-detail').style.display='none';
+}
+function showReportDay(i){
+  const ws=weekStart(reportWeekOff);const d=new Date(ws);d.setDate(ws.getDate()+i);
+  const dateISO=d.toISOString().slice(0,10);const wd=getWD(weekKey(reportWeekOff));
+  const logs=(S.workoutLog||[]).filter(w=>w.dateISO===dateISO);
+  const det=document.getElementById('report-day-detail');
+  const dateStr=d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
+  det.innerHTML=logs.length===0?`<div style="font-size:13px;color:var(--muted)">${dateStr.charAt(0).toUpperCase()+dateStr.slice(1)} — sem treino registrado</div>`:
+    logs.map(log=>`<div><div style="font-size:13px;font-weight:600;color:var(--accent);margin-bottom:6px">${log.label}${log.dur?' · '+log.dur+'min':''}</div>
+      ${(getTreinos().find(t=>t.id===log.treinoId)?.exercicios||[]).map(ex=>{const done=!!((wd.exDone||{})[ex.id]);return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:0.5px solid var(--border)"><div style="width:18px;height:18px;border-radius:50%;${done?'background:var(--green);color:#052e16':'border:1.5px solid var(--border2)'};display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0">${done?'✓':''}</div><span style="font-size:13px">${ex.nome}</span></div>`;}).join('')}</div>`).join('');
+  det.style.display='block';
+}
 function openWeightModal(){
   document.getElementById('weight-modal-input').value='';
-  const today=new Date().toISOString().slice(0,10);
-  document.getElementById('weight-modal-date').value=today;
+  document.getElementById('weight-modal-date').value=new Date().toISOString().slice(0,10);
   document.getElementById('weight-modal').classList.add('open');
   setTimeout(()=>document.getElementById('weight-modal-input').focus(),150);
 }
@@ -1245,23 +1332,17 @@ function saveWeight(){
   const v=parseFloat(document.getElementById('weight-modal-input').value);
   if(!v||v<30||v>300){showToast('Peso inválido');return;}
   const dateISO=document.getElementById('weight-modal-date').value||new Date().toISOString().slice(0,10);
-  const [y,m,d]=dateISO.split('-');
-  const dateBR=d+'/'+m+'/'+y;
-  // insert sorted by date descending
-  const entry={val:v,date:dateBR,dateISO};
-  S.weightLog.push(entry);
+  const [y,m,dd]=dateISO.split('-');
+  S.weightLog.push({val:v,date:dd+'/'+m+'/'+y,dateISO});
   S.weightLog.sort((a,b)=>b.dateISO.localeCompare(a.dateISO));
   save();closeModal('weight-modal');renderReport();showToast('Peso registrado!');
 }
-
-// ── WEIGHT CHART ─────────────────────────────────────────
 function drawChart(){
-  const wl=S.weightLog;
+  const wl=S.weightLog||[];
   if(wl.length<2){document.getElementById('weight-chart-wrap').style.display='none';return;}
   document.getElementById('weight-chart-wrap').style.display='block';
   const canvas=document.getElementById('weight-chart-canvas');
-  const dpr=window.devicePixelRatio||1;
-  const W=canvas.parentElement.clientWidth-28,H=140;
+  const dpr=window.devicePixelRatio||1;const W=canvas.parentElement.clientWidth-28,H=140;
   canvas.width=W*dpr;canvas.height=H*dpr;canvas.style.width=W+'px';canvas.style.height=H+'px';
   const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);
   const pts=[...wl].reverse();const vals=pts.map(p=>p.val);
@@ -1281,9 +1362,7 @@ function drawChart(){
   ctx.strokeStyle='#a78bfa';ctx.lineWidth=2;ctx.stroke();
   pts.forEach((p,i)=>{const x=xp(i),y=yp(p.val);ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);ctx.fillStyle='#a78bfa';ctx.fill();if(i===0||i===pts.length-1||pts.length<=6||(i%Math.ceil(pts.length/4)===0)){const parts=p.date.split('/');ctx.fillStyle='rgba(255,255,255,0.4)';ctx.font='10px -apple-system,sans-serif';ctx.textAlign='center';ctx.fillText(parts[0]+'/'+parts[1],x,H-6);}});
 }
-
-// ── BMI ──────────────────────────────────────────────────
-function calcBMI(){const h=parseFloat(S.profile.altura);const p=S.weightLog.length?S.weightLog[0].val:parseFloat(S.profile.pesoInicial);if(!h||!p)return null;return p/((h/100)*(h/100));}
+function calcBMI(){const h=parseFloat(S.profile.altura);const p=(S.weightLog&&S.weightLog.length)?S.weightLog[0].val:parseFloat(S.profile.pesoInicial);if(!h||!p)return null;return p/((h/100)*(h/100));}
 function bmiInfo(b){if(b<18.5)return{label:'Abaixo do peso',color:'#60a5fa'};if(b<25)return{label:'Peso normal',color:'#34d399'};if(b<30)return{label:'Sobrepeso',color:'#fbbf24'};if(b<35)return{label:'Obesidade grau I',color:'#fb923c'};if(b<40)return{label:'Obesidade grau II',color:'#f87171'};return{label:'Obesidade grau III',color:'#ef4444'};}
 function renderBMI(){
   const bmi=calcBMI();
@@ -1297,86 +1376,11 @@ function renderBMI(){
   document.getElementById('bmi-marker').style.left=Math.min(100,Math.max(0,(b-15)/25*100))+'%';
 }
 
-// ── REPORT ───────────────────────────────────────────────
-function renderReport(){
-  reportWeekOff=0;
-  renderReportWeekNav();
-  const wl=S.weightLog;
-  if(wl.length>0){
-    document.getElementById('weight-stats-row').style.display='flex';
-    document.getElementById('ws-atual').textContent=wl[0].val+' kg';
-    document.getElementById('ws-max').textContent=Math.max(...wl.map(w=>w.val))+' kg';
-    document.getElementById('ws-min').textContent=Math.min(...wl.map(w=>w.val))+' kg';
-    document.getElementById('ws-meta').textContent=S.profile.pesoMeta?S.profile.pesoMeta+' kg':'–';
-  } else document.getElementById('weight-stats-row').style.display='none';
-  drawChart();
-  document.getElementById('weight-hist').innerHTML=wl.length?wl.slice(0,8).map((w,i)=>{const prev=wl[i+1];const diff=prev?parseFloat((w.val-prev.val).toFixed(1)):null;const dH=diff===null?'':`<span class="wh-diff ${diff>0?'up':diff<0?'down':'same'}">${diff>0?'+':''}${diff} kg</span>`;return `<div class="weight-hist-row"><div><div class="wh-val">${w.val} kg</div><div class="wh-date">${w.date}</div></div>${dH}</div>`;}).join(''):'<div style="font-size:13px;color:var(--muted);padding:4px 0">Nenhum registro ainda. Use o botão Registrar acima.</div>';
-  renderBMI();
-  document.getElementById('wlog-list').innerHTML=S.workoutLog.length?S.workoutLog.slice(0,20).map((w,sliceIdx)=>{
-    const realIdx=sliceIdx; // slice starts from 0 which matches S.workoutLog index
-    const meta=[w.dur?w.dur+'min':'',w.cal?w.cal+'kcal':''].filter(Boolean).join(' · ');
-    return `<div style="display:flex;align-items:center;padding:9px 0;border-bottom:0.5px solid var(--border);gap:8px">
-      <div style="flex:1;min-width:0">
-        <div class="wl-name">${w.label}</div>
-        <div class="wl-meta">${w.focus} · ${w.date}${meta?' · '+meta:''}</div>
-      </div>
-      <button onclick="deleteWorkoutLog(${realIdx})" style="background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:6px;flex-shrink:0;line-height:1" title="Apagar">🗑</button>
-    </div>`;
-  }).join(''):'<div style="font-size:13px;color:var(--muted);padding:4px 0">Nenhum treino registrado ainda.</div>';
-}
-
-// ── REPORT WEEK NAV ─────────────────────────────────────
-function changeReportWeek(dir){
-  if(reportWeekOff+dir>0)return;
-  reportWeekOff+=dir;
-  document.getElementById('report-day-detail').style.display='none';
-  renderReportWeekNav();
-}
-function renderReportWeekNav(){
-  const ws=weekStart(reportWeekOff),we=new Date(ws);we.setDate(we.getDate()+6);
-  const lbl=reportWeekOff===0?'Esta semana':reportWeekOff===-1?'Semana passada':ws.getDate()+' '+MN[ws.getMonth()]+' – '+we.getDate()+' '+MN[we.getMonth()];
-  document.getElementById('report-week-label').textContent=lbl;
-  document.getElementById('report-wn-next').className='wn-btn'+(reportWeekOff>=0?' disabled':'');
-  const today=new Date();today.setHours(0,0,0,0);
-  const wd=getWD(weekKey(reportWeekOff));
-  let html='';
-  for(let i=0;i<7;i++){
-    const d=new Date(ws);d.setDate(ws.getDate()+i);
-    const isT=d.getTime()===today.getTime();
-    const trained=!!(wd.daysTrained&&wd.daysTrained[i]);
-    html+=`<div onclick="showReportDay(${i})" style="border-radius:6px;border:0.5px solid ${isT?'var(--accent)':trained?'rgba(52,211,153,.3)':'var(--border)'};background:${trained?'rgba(52,211,153,.1)':'transparent'};display:flex;flex-direction:column;align-items:center;padding:7px 2px 6px;cursor:pointer">
-      <span style="font-size:9px;color:${isT?'var(--accent)':'var(--muted)'};text-transform:uppercase;margin-bottom:4px">${DL[d.getDay()].slice(0,1)}</span>
-      <span style="font-size:14px;font-weight:600;color:${trained?'var(--green)':isT?'var(--accent)':'var(--text)'}">${d.getDate()}</span>
-      <span style="width:4px;height:4px;border-radius:50%;background:var(--green);margin-top:4px;opacity:${trained?1:0}"></span>
-    </div>`;
-  }
-  document.getElementById('report-week-days').innerHTML=html;
-  document.getElementById('report-day-detail').style.display='none';
-}
-function showReportDay(i){
-  const ws=weekStart(reportWeekOff);
-  const d=new Date(ws);d.setDate(ws.getDate()+i);
-  const dateISO=d.toISOString().slice(0,10);
-  const wd=getWD(weekKey(reportWeekOff));
-  const logs=S.workoutLog.filter(w=>w.dateISO===dateISO);
-  const det=document.getElementById('report-day-detail');
-  const dateStr=d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
-  if(logs.length===0){
-    det.innerHTML=`<div style="font-size:13px;color:var(--muted)">${dateStr.charAt(0).toUpperCase()+dateStr.slice(1)} — sem treino registrado</div>`;
-  } else {
-    det.innerHTML=logs.map(log=>`<div>
-      <div style="font-size:13px;font-weight:600;color:var(--accent);margin-bottom:6px">${log.label} · ${log.dur?log.dur+'min':dateStr}</div>
-      ${getTreinos().find(t=>t.id===log.treinoId)?.exercicios.map(ex=>{const done=!!((wd.exDone||{})[ex.id]);return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:0.5px solid var(--border)"><div style="width:18px;height:18px;border-radius:50%;${done?'background:var(--green);color:#052e16':'border:1.5px solid var(--border2)'};display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0">${done?'✓':''}</div><span style="font-size:13px">${ex.nome}</span></div>`;}).join('')||''}
-    </div>`).join('');
-  }
-  det.style.display='block';
-}
-
 // ── SETTINGS ─────────────────────────────────────────────
 let editTid='a',profSexo='';
 function openSetting(w){
   document.getElementById('sub-settings').style.display='block';
-  ['profile','rest','goal','names','exedit'].forEach(s=>document.getElementById('sub-'+s).style.display=s===w?'block':'none');
+  ['profile','rest','goal','names','exedit'].forEach(s=>{const el=document.getElementById('sub-'+s);if(el)el.style.display=s===w?'block':'none';});
   if(w==='profile')renderProfileForm();
   if(w==='rest'){const v=S.settings.restSecs;document.getElementById('rest-range').value=v;document.getElementById('rest-range-val').textContent=fmtT(v);}
   if(w==='goal'){document.getElementById('goal-range').value=S.settings.weekGoal;document.getElementById('goal-range-val').textContent=S.settings.weekGoal;}
@@ -1395,7 +1399,7 @@ function renderProfileForm(){
     <div class="setting-detail profile-form">
       <div class="pf-row"><label>Nome</label><input class="pf-input" id="pf-nome" value="${p.nome||''}" placeholder="Seu nome"></div>
       <div class="pf-row"><label>Sexo</label><div class="pf-seg"><button id="psm" class="${p.sexo==='M'?'active':''}" onclick="setSexo('M')">Masculino</button><button id="psf" class="${p.sexo==='F'?'active':''}" onclick="setSexo('F')">Feminino</button></div></div>
-      <div class="pf-row"><label>Idade</label><input class="pf-input" id="pf-idade" type="number" value="${p.idade||''}" placeholder="Anos" min="10" max="100"></div>
+      <div class="pf-row"><label>Idade</label><input class="pf-input" id="pf-idade" type="number" value="${p.idade||''}" placeholder="Anos"></div>
       <div class="pf-row"><label>Altura (cm)</label><input class="pf-input" id="pf-altura" type="number" value="${p.altura||''}" placeholder="Ex: 175"></div>
       <div class="pf-row"><label>Peso inicial</label><input class="pf-input" id="pf-peso" type="number" value="${p.pesoInicial||''}" placeholder="kg" step="0.1"></div>
       <div class="pf-row"><label>Meta de peso</label><input class="pf-input" id="pf-meta" type="number" value="${p.pesoMeta||''}" placeholder="kg" step="0.1"></div>
@@ -1405,510 +1409,176 @@ function renderProfileForm(){
 function setSexo(s){profSexo=s;document.getElementById('psm').className=s==='M'?'active':'';document.getElementById('psf').className=s==='F'?'active':'';}
 function saveProfile(){
   S.profile={nome:document.getElementById('pf-nome').value,sexo:profSexo,idade:document.getElementById('pf-idade').value,altura:document.getElementById('pf-altura').value,pesoInicial:document.getElementById('pf-peso').value,pesoMeta:document.getElementById('pf-meta').value};
-  save();
-  const nome=S.profile.nome;
-  setHeader(nome?'Olá, '+nome.split(' ')[0]:'Meu Treino','Bem-vindo');
+  save();const nome=S.profile.nome;
+  setHeader(nome?'Olá, '+nome.split(' ')[0]:'Configurações','Personalizar');
   document.getElementById('profile-desc').textContent=nome?nome+(S.profile.altura?' · '+S.profile.altura+'cm':''):'Nome, idade, altura, peso...';
   document.getElementById('sub-settings').style.display='none';showToast('Perfil salvo!');
 }
-function renderNamesForm(){document.getElementById('names-form').innerHTML=getTreinos().map(t=>`<div class="setting-detail" style="margin-bottom:10px"><h4>${t.label}</h4><input class="text-input" id="nl-${t.id}" value="${t.label}" placeholder="Nome"><input class="text-input" id="nf-${t.id}" value="${t.focus}" placeholder="Descrição"></div>`).join('');}
-function saveNames(){if(!S.customTreinos)S.customTreinos={};DT.forEach(t=>{if(!S.customTreinos[t.id])S.customTreinos[t.id]={exercicios:{}};S.customTreinos[t.id].label=document.getElementById('nl-'+t.id).value||t.label;S.customTreinos[t.id].focus=document.getElementById('nf-'+t.id).value||t.focus;});save();renderTreinosTab();document.getElementById('sub-settings').style.display='none';showToast('Nomes salvos!');}
+function renderNamesForm(){
+  document.getElementById('names-form').innerHTML=getTreinos().map(t=>`<div class="setting-detail" style="margin-bottom:10px"><h4>${t.label}</h4><input class="text-input" id="nl-${t.id}" value="${t.label}" placeholder="Nome"><input class="text-input" id="nf-${t.id}" value="${t.focus}" placeholder="Descrição"></div>`).join('');
+}
+function saveNames(){
+  if(!S.customTreinos)S.customTreinos={};
+  DT.forEach(t=>{if(!S.customTreinos[t.id])S.customTreinos[t.id]={exercicios:{}};const nl=document.getElementById('nl-'+t.id);const nf=document.getElementById('nf-'+t.id);if(nl)S.customTreinos[t.id].label=nl.value||t.label;if(nf)S.customTreinos[t.id].focus=nf.value||t.focus;});
+  save();renderTreinosTab();document.getElementById('sub-settings').style.display='none';showToast('Nomes salvos!');
+}
 function setEditTreino(id){
   editTid=id;
-  ['a','b','c','d'].forEach(x=>{const b=document.getElementById('edit-btn-'+x);b.style.background=x===id?'var(--accent2)':'';b.style.color=x===id?'white':'';b.style.borderColor=x===id?'var(--accent2)':'';});
-  const t=getTreinos().find(t=>t.id===id);
+  ['a','b','c'].forEach(x=>{const b=document.getElementById('edit-btn-'+x);if(b){b.style.background=x===id?'var(--accent2)':'';b.style.color=x===id?'white':'';b.style.borderColor=x===id?'var(--accent2)':'';}});
+  const t=getTreinos().find(t=>t.id===id);if(!t)return;
   document.getElementById('exedit-form').innerHTML=t.exercicios.map(ex=>`<div class="ex-edit-card"><h4>${ex.nome}</h4><div class="edit-row"><label>Séries</label><input class="edit-input" type="number" id="es-${ex.id}" value="${ex.series}" min="1" max="10"></div><div class="edit-row"><label>Reps</label><input class="edit-input" type="text" id="er-${ex.id}" value="${ex.reps}"></div></div>`).join('');
 }
 function saveExEdit(){
   if(!S.customTreinos)S.customTreinos={};const t=DT.find(t=>t.id===editTid);
   if(!S.customTreinos[editTid])S.customTreinos[editTid]={exercicios:{}};
   if(!S.customTreinos[editTid].exercicios)S.customTreinos[editTid].exercicios={};
-  t.exercicios.forEach(ex=>{S.customTreinos[editTid].exercicios[ex.id]={series:parseInt(document.getElementById('es-'+ex.id).value)||ex.series,reps:document.getElementById('er-'+ex.id).value||ex.reps};});
+  t.exercicios.forEach(ex=>{const es=document.getElementById('es-'+ex.id);const er=document.getElementById('er-'+ex.id);if(es&&er)S.customTreinos[editTid].exercicios[ex.id]={series:parseInt(es.value)||ex.series,reps:er.value||ex.reps};});
   save();document.getElementById('sub-settings').style.display='none';showToast('Alterações salvas!');
 }
-function getTreinos(){
-  const base = DT.map(t=>{
-    const ct=(S.customTreinos&&S.customTreinos[t.id])||{};
-    // fully overridden treino (created/edited via editor)
-    if(ct._full) return {...ct, id:t.id};
-    return{...t,label:ct.label||t.label,focus:ct.focus||t.focus,
-      exercicios:t.exercicios.map(ex=>{const ce=ct.exercicios&&ct.exercicios[ex.id];return ce?{...ex,series:ce.series??ex.series,reps:ce.reps??ex.reps}:ex;})};
-  });
-  // custom-added treinos (not in DT)
-  const extraIds = S.treinosList ? S.treinosList.filter(id=>!DT.find(t=>t.id===id)) : [];
-  const extras = extraIds.map(id=>(S.customTreinos&&S.customTreinos[id])).filter(Boolean);
-  // filter by treinosList order (deletions respected)
-  const list = S.treinosList || DT.map(t=>t.id);
-  const all = [...base, ...extras];
-  return list.map(id=>all.find(t=>t.id===id)).filter(Boolean);
-}
 
-// ── TREINO EDITOR ────────────────────────────────────────
-let editorTreinoId = null; // null = new treino
-let editorExList = [];     // [{id,nome,series,reps,musculo,passos}]
-
-function openEditor(id){
-  document.querySelectorAll('.tc-popup').forEach(p=>p.style.display='none');
-  editorTreinoId = id;
-  const t = id ? getTreinos().find(t=>t.id===id) : null;
-  document.getElementById('editor-title').textContent = t ? 'Editar treino' : 'Novo treino';
-  document.getElementById('editor-name').value = t ? t.label : '';
-  document.getElementById('editor-focus').value = t ? t.focus : '';
-  document.getElementById('editor-del-btn').style.display = t ? 'block' : 'none';
-  // build editorExList
-  editorExList = t ? t.exercicios.map(ex=>({...ex, passos:[...(ex.passos||[])]})) : [];
-  renderEditorExList();
-  document.getElementById('editor-back').onclick = ()=>{
-    showScreen('treinos-screen'); setHeader('Treinos','Selecione e comece');
-    document.querySelectorAll('#bottom-nav button').forEach(b=>b.classList.remove('active'));
-    document.getElementById('nav-treinos').classList.add('active');
-  };
-  showScreen('editor-screen');
-  setHeader(t?'Editar treino':'Novo treino', t?t.focus:'');
-  document.querySelectorAll('#bottom-nav button').forEach(b=>b.classList.remove('active'));
-  document.getElementById('nav-treinos').classList.add('active');
-}
-
-function renderEditorExList(){
-  const wrap = document.getElementById('editor-ex-list');
-  wrap.innerHTML = editorExList.map((ex,i)=>`
-    <div class="ex-editor-card" id="exc-${i}" draggable="true"
-      ondragstart="edDragStart(event,${i})" ondragover="edDragOver(event,${i})" ondrop="edDrop(event,${i})">
-      <div class="ex-editor-top">
-        <span class="ex-editor-drag" title="Arrastar para reordenar">⠿</span>
-        <input class="ex-editor-name" value="${esc(ex.nome)}" placeholder="Nome do exercício"
-          oninput="editorExList[${i}].nome=this.value">
-        <button class="ex-editor-del" onclick="removeEditorEx(${i})" title="Remover">✕</button>
-      </div>
-      <div class="ex-editor-row">
-        <label>Músculo</label>
-        <input class="ex-editor-muscle" value="${esc(ex.musculo||'')}" placeholder="Ex: Peitoral"
-          oninput="editorExList[${i}].musculo=this.value">
-      </div>
-      <div class="ex-editor-row">
-        <label>Séries</label>
-        <input type="number" min="1" max="10" value="${ex.series||3}"
-          oninput="editorExList[${i}].series=parseInt(this.value)||3">
-        <label style="width:40px;padding-top:9px">Reps</label>
-        <input type="text" data-field="reps" value="${esc(ex.reps||'12')}" placeholder="Ex: 10–12"
-          oninput="editorExList[${i}].reps=this.value">
-      </div>
-    </div>`).join('');
-}
-
-function esc(s){return String(s||'').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
-
-function addEditorEx(){
-  editorExList.push({id:'ex_'+Date.now()+'_'+Math.random().toString(36).slice(2),nome:'',musculo:'',series:3,reps:'12',passos:[]});
-  renderEditorExList();
-  // scroll to new card
-  const wrap=document.getElementById('editor-ex-list');
-  setTimeout(()=>wrap.lastElementChild&&wrap.lastElementChild.scrollIntoView({behavior:'smooth'}),50);
-}
-
-function removeEditorEx(i){
-  editorExList.splice(i,1);
-  renderEditorExList();
-}
-
-// drag-to-reorder
-let dragIdx=null;
-function edDragStart(e,i){dragIdx=i;e.dataTransfer.effectAllowed='move';}
-function edDragOver(e,i){e.preventDefault();e.dataTransfer.dropEffect='move';}
-function edDrop(e,i){
-  e.preventDefault();
-  if(dragIdx===null||dragIdx===i)return;
-  const item=editorExList.splice(dragIdx,1)[0];
-  editorExList.splice(i,0,item);
-  dragIdx=null; renderEditorExList();
-}
-
-function saveEditor(){
-  const name = document.getElementById('editor-name').value.trim();
-  const focus = document.getElementById('editor-focus').value.trim();
-  if(!name){showToast('Dê um nome ao treino');return;}
-  if(editorExList.length===0){showToast('Adicione pelo menos 1 exercício');return;}
-  // sync all field values directly before saving
-  document.querySelectorAll('#editor-ex-list .ex-editor-card').forEach((card,i)=>{
-    if(!editorExList[i]) return;
-    const nome = card.querySelector('.ex-editor-name');
-    const musculo = card.querySelector('.ex-editor-muscle');
-    const seriesInput = card.querySelector('input[type="number"]');
-    const repsInput = card.querySelector('input[data-field="reps"]');
-    if(nome) editorExList[i].nome = nome.value;
-    if(musculo) editorExList[i].musculo = musculo.value;
-    if(seriesInput) editorExList[i].series = parseInt(seriesInput.value)||3;
-    if(repsInput) editorExList[i].reps = repsInput.value||'12';
-  });
-  // Preserve original icon or derive from name
-  const origT = editorTreinoId ? getTreinos().find(t=>t.id===editorTreinoId) : null;
-  const icon = (origT && origT.icon) || name.trim().charAt(0).toUpperCase();
-  if(!S.customTreinos) S.customTreinos={};
-  let tid = editorTreinoId;
-  const isNew = !tid;
-  if(isNew){
-    tid = 'ct_'+Date.now();
-    if(!S.treinosList) S.treinosList = DT.map(t=>t.id);
-    S.treinosList.push(tid);
-  }
-  S.customTreinos[tid] = {
-    _full: true, id:tid, label:name, focus:focus||name,
-    icon: icon, exercicios: editorExList.map(ex=>({...ex}))
-  };
-  save();
-  renderTreinosTab();
-  showScreen('treinos-screen');
-  setHeader('Treinos','Selecione e comece');
-  document.querySelectorAll('#bottom-nav button').forEach(b=>b.classList.remove('active'));
-  document.getElementById('nav-treinos').classList.add('active');
-  showToast(isNew?'Treino criado!':'Treino salvo!');
-}
-
-function deleteEditorTreino(){
-  if(!editorTreinoId) return;
-  const t=getTreinos().find(t=>t.id===editorTreinoId);
-  if(!t) return;
-  document.getElementById('confirm-modal-title').textContent='Excluir treino';
-  document.getElementById('confirm-modal-msg').textContent='Excluir "'+t.label+'"? Isso não pode ser desfeito.';
-  document.getElementById('confirm-modal-ok').onclick=()=>{
-    closeModal('confirm-modal');
-    deleteTreino(editorTreinoId);
-    showScreen('treinos-screen');
-    setHeader('Treinos','Selecione e comece');
-    document.querySelectorAll('#bottom-nav button').forEach(b=>b.classList.remove('active'));
-    document.getElementById('nav-treinos').classList.add('active');
-  };
-  document.getElementById('confirm-modal').classList.add('open');
-}
-
-// ── SAÚDE ────────────────────────────────────────────────
-let saudeDateOff = 0; // 0=today, -1=yesterday...
-let saudeEditType = null;
-
-function saudeDateKey(off){
-  const d=new Date(); d.setDate(d.getDate()+off); d.setHours(0,0,0,0);
-  return d.toISOString().slice(0,10);
-}
-function saudeDateLabel(off){
-  if(off===0) return 'Hoje';
-  if(off===-1) return 'Ontem';
-  const d=new Date(); d.setDate(d.getDate()+off);
-  return d.toLocaleDateString('pt-BR',{weekday:'short',day:'numeric',month:'short'});
-}
-function getSaudeDay(off){
-  const key=saudeDateKey(off);
-  if(!S.saudeLog) S.saudeLog={};
-  if(!S.saudeLog[key]) S.saudeLog[key]={steps:0,sleepH:0,sleepMin:0,water:0};
-  return S.saudeLog[key];
-}
-// Goals from settings (defaults)
-function saudeGoals(){ return { steps:S.settings.goalSteps||8000, sleep:S.settings.goalSleep||8, water:S.settings.goalWater||2000 }; }
-
-function changeSaudeDate(dir){
-  if(saudeDateOff+dir>0) return;
-  saudeDateOff+=dir;
-  renderSaude();
-}
-
+// ── SAÚDE ─────────────────────────────────────────────────
+let saudeOff=0,saudeModalType='',fsMeal='cafe';
+const FOODS=[
+  {n:'Arroz branco cozido',kcal:130,prot:2.5,carb:28,fat:0.2},
+  {n:'Feijão preto cozido',kcal:77,prot:4.5,carb:14,fat:0.5},
+  {n:'Frango grelhado (peito)',kcal:165,prot:31,carb:0,fat:3.6},
+  {n:'Ovo cozido',kcal:155,prot:13,carb:1.1,fat:11},
+  {n:'Banana prata',kcal:98,prot:1.3,carb:23,fat:0.1},
+  {n:'Pão francês',kcal:300,prot:9,carb:58,fat:3},
+  {n:'Leite integral',kcal:61,prot:3.2,carb:4.7,fat:3.3},
+  {n:'Iogurte natural',kcal:59,prot:3.5,carb:4.7,fat:3.3},
+  {n:'Whey protein (dose)',kcal:120,prot:24,carb:3,fat:2},
+  {n:'Aveia em flocos',kcal:394,prot:14,carb:67,fat:8.5},
+  {n:'Batata doce cozida',kcal:86,prot:1.6,carb:20,fat:0.1},
+  {n:'Carne bovina moída',kcal:215,prot:20,carb:0,fat:14},
+  {n:'Atum em lata',kcal:128,prot:29,carb:0,fat:1},
+  {n:'Queijo minas',kcal:264,prot:17,carb:3,fat:21},
+  {n:'Maçã',kcal:52,prot:0.3,carb:14,fat:0.2},
+  {n:'Laranja',kcal:47,prot:0.9,carb:11,fat:0.1},
+  {n:'Café preto',kcal:2,prot:0.3,carb:0,fat:0},
+  {n:'Tapioca',kcal:340,prot:0.6,carb:84,fat:0.2},
+  {n:'Salada mista',kcal:20,prot:1.5,carb:3,fat:0.3},
+  {n:'Azeite de oliva',kcal:884,prot:0,carb:0,fat:100},
+  {n:'Pão integral',kcal:247,prot:8,carb:46,fat:3.4},
+  {n:'Salmão grelhado',kcal:208,prot:20,carb:0,fat:13},
+  {n:'Queijo cottage',kcal:98,prot:11,carb:3.4,fat:4.3},
+  {n:'Castanha do Pará',kcal:656,prot:14,carb:12,fat:66},
+  {n:'Amendoim torrado',kcal:567,prot:26,carb:16,fat:49},
+  {n:'Macarrão cozido',kcal:158,prot:5.8,carb:31,fat:0.9},
+  {n:'Pão de queijo',kcal:270,prot:4,carb:42,fat:9},
+  {n:'Chocolate ao leite',kcal:535,prot:7.6,carb:59,fat:30},
+  {n:'Suco de laranja natural',kcal:45,prot:0.7,carb:10,fat:0.2},
+];
+let fsSearchResults=[];
+function getSaudeData(dateISO){if(!S.saudeLog[dateISO])S.saudeLog[dateISO]={steps:0,sleep:null,water:0,meals:[]};return S.saudeLog[dateISO];}
+function saudeDateKey(off){const d=new Date();d.setDate(d.getDate()+off);return d.toISOString().slice(0,10);}
 function renderSaude(){
-  const d=getSaudeDay(saudeDateOff);
-  const g=saudeGoals();
-  document.getElementById('saude-date-label').textContent=saudeDateLabel(saudeDateOff);
-  document.getElementById('saude-date-next').className='wn-btn'+(saudeDateOff>=0?' disabled':'');
-
-  // Steps
-  document.getElementById('sd-steps').innerHTML=d.steps+'<span class="sc-unit"> passos</span>';
-  document.getElementById('sd-steps-meta').textContent='meta: '+g.steps.toLocaleString('pt-BR');
-  document.getElementById('sd-steps-bar').style.width=Math.min(100,d.steps/g.steps*100)+'%';
-
-  // Sleep
-  const sleepTotalMin=(d.sleepH||0)*60+(d.sleepMin||0);
-  const sleepStr=sleepTotalMin>0?(d.sleepH>0?d.sleepH+'h ':'')+((d.sleepMin||0)>0?(d.sleepMin)+'min':''):'–';
-  document.getElementById('sd-sleep').innerHTML=sleepStr;
-  document.getElementById('sd-sleep-meta').textContent='meta: '+g.sleep+'h';
-  document.getElementById('sd-sleep-bar').style.width=Math.min(100,sleepTotalMin/(g.sleep*60)*100)+'%';
-
-  // Water
-  document.getElementById('sd-water').textContent=d.water;
-  document.getElementById('sd-water-meta').textContent='/ '+g.water+' ml';
-  document.getElementById('sd-water-bar').style.width=Math.min(100,d.water/g.water*100)+'%';
-  // hide quick-add btns for past days
-  document.getElementById('water-quick-btns').style.display=saudeDateOff===0?'flex':'none';
-
-  // Nutrition
-  renderFsMeals();
-  // History
-  renderSaudeHist();
+  const dateISO=saudeDateKey(saudeOff);const d=new Date(dateISO);
+  const label=saudeOff===0?'Hoje':saudeOff===-1?'Ontem':d.toLocaleDateString('pt-BR',{weekday:'short',day:'numeric',month:'short'});
+  document.getElementById('saude-date-label').textContent=label;
+  document.getElementById('saude-date-next').className='wn-btn'+(saudeOff>=0?' disabled':'');
+  const sd=getSaudeData(dateISO);
+  const stepsGoal=S.settings.stepsGoal||8000;
+  document.getElementById('sd-steps').innerHTML=sd.steps.toLocaleString('pt-BR');
+  document.getElementById('sd-steps-meta').textContent='meta: '+stepsGoal.toLocaleString('pt-BR');
+  document.getElementById('sd-steps-bar').style.width=Math.min(100,sd.steps/stepsGoal*100)+'%';
+  const sleepGoal=S.settings.sleepGoal||8;const sleepH=sd.sleep?sd.sleep.hours:null;
+  document.getElementById('sd-sleep').innerHTML=(sleepH!==null?sleepH+'h':'–');
+  document.getElementById('sd-sleep-meta').textContent='meta: '+sleepGoal+'h';
+  document.getElementById('sd-sleep-bar').style.width=sleepH?Math.min(100,sleepH/sleepGoal*100)+'%':'0%';
+  const waterGoal=S.settings.waterGoal||2000;
+  document.getElementById('sd-water').textContent=sd.water.toLocaleString('pt-BR');
+  document.getElementById('sd-water-meta').textContent='/ '+waterGoal.toLocaleString('pt-BR')+' ml';
+  document.getElementById('sd-water-bar').style.width=Math.min(100,sd.water/waterGoal*100)+'%';
+  const tot=(sd.meals||[]).reduce((a,m)=>({kcal:a.kcal+(m.kcal||0),prot:a.prot+(m.prot||0),carb:a.carb+(m.carb||0),fat:a.fat+(m.fat||0)}),{kcal:0,prot:0,carb:0,fat:0});
+  document.getElementById('fs-cal').textContent=Math.round(tot.kcal);
+  document.getElementById('fs-prot').textContent=Math.round(tot.prot)+'g';
+  document.getElementById('fs-carb').textContent=Math.round(tot.carb)+'g';
+  document.getElementById('fs-fat').textContent=Math.round(tot.fat)+'g';
+  renderFsMeals(sd,dateISO);renderSaudeHist();setFsMeal(fsMeal);
 }
-
-function addWater(ml){
-  const d=getSaudeDay(0);
-  d.water=Math.max(0,d.water+ml);
-  save(); renderSaude();
-  showToast('+'+ml+'ml 💧');
-}
-
-let saudeEditOff=0;
+function changeSaudeDate(dir){if(saudeOff+dir>0)return;saudeOff+=dir;document.getElementById('fs-results').innerHTML='';renderSaude();}
 function editSaude(type){
-  saudeEditType=type; saudeEditOff=saudeDateOff;
-  const d=getSaudeDay(saudeDateOff);
-  const extra=document.getElementById('saude-modal-extra');
-  extra.style.display='none';
-  if(type==='steps'){
-    document.getElementById('saude-modal-title').textContent='Passos do dia';
-    document.getElementById('saude-modal-label').textContent='Passos';
-    document.getElementById('saude-modal-input').value=d.steps||'';
-    document.getElementById('saude-modal-input').placeholder='Ex: 8000';
-  } else if(type==='sleep'){
-    document.getElementById('saude-modal-title').textContent='Tempo de sono';
-    document.getElementById('saude-modal-label').textContent='Horas dormidas';
-    document.getElementById('saude-modal-input').value=d.sleepH||'';
-    document.getElementById('saude-modal-input').placeholder='Ex: 7';
-    extra.style.display='flex';
-    document.getElementById('saude-modal-end').value=d.sleepMin||'';
-    document.getElementById('saude-modal-end').placeholder='Min restantes (0-59)';
-    // relabel
-    document.querySelector('#saude-modal-extra label').textContent='Minutos extras';
-  } else if(type==='water'){
-    document.getElementById('saude-modal-title').textContent='Água consumida';
-    document.getElementById('saude-modal-label').textContent='Total (ml)';
-    document.getElementById('saude-modal-input').value=d.water||'';
-    document.getElementById('saude-modal-input').placeholder='Ex: 2000';
-  }
-  document.getElementById('saude-modal').classList.add('open');
-  setTimeout(()=>document.getElementById('saude-modal-input').focus(),150);
+  saudeModalType=type;const sd=getSaudeData(saudeDateKey(saudeOff));
+  const title=document.getElementById('saude-modal-title');const label=document.getElementById('saude-modal-label');const input=document.getElementById('saude-modal-input');
+  document.getElementById('saude-modal-extra').style.display='none';
+  if(type==='steps'){title.textContent='Registrar passos';label.textContent='Passos';input.value=sd.steps||'';input.min=0;input.max=100000;input.step=100;}
+  else if(type==='sleep'){title.textContent='Registrar sono';label.textContent='Horas dormidas';input.value=sd.sleep?sd.sleep.hours:'';input.min=0;input.max=24;input.step=0.5;}
+  else if(type==='water'){title.textContent='Registrar água';label.textContent='Quantidade (ml)';input.value=sd.water||'';input.min=0;input.max=10000;input.step=250;}
+  document.getElementById('saude-modal').classList.add('open');setTimeout(()=>input.focus(),150);
 }
-
 function saveSaudeModal(){
-  const d=getSaudeDay(saudeEditOff);
-  const val=parseInt(document.getElementById('saude-modal-input').value)||0;
-  if(saudeEditType==='steps'){ d.steps=val; }
-  else if(saudeEditType==='sleep'){
-    d.sleepH=val;
-    d.sleepMin=parseInt(document.getElementById('saude-modal-end').value)||0;
-  }
-  else if(saudeEditType==='water'){ d.water=val; }
-  save(); closeModal('saude-modal'); renderSaude(); showToast('Salvo!');
+  const sd=getSaudeData(saudeDateKey(saudeOff));const val=parseFloat(document.getElementById('saude-modal-input').value)||0;
+  if(saudeModalType==='steps')sd.steps=Math.round(val);
+  else if(saudeModalType==='sleep')sd.sleep={hours:val};
+  else if(saudeModalType==='water')sd.water=Math.round(val);
+  save();closeModal('saude-modal');renderSaude();showToast('Salvo!');
 }
-
-function renderSaudeHist(){
-  const g=saudeGoals();
-  let rows='';
-  for(let i=0;i>=-6;i--){
-    const key=saudeDateKey(i);
-    const d=(S.saudeLog&&S.saudeLog[key])||{steps:0,sleepH:0,sleepMin:0,water:0};
-    const label=i===0?'Hoje':i===-1?'Ontem':new Date(key+'T12:00:00').toLocaleDateString('pt-BR',{weekday:'short',day:'numeric'});
-    const sleepStr=(d.sleepH||0)>0||((d.sleepMin||0)>0)?(d.sleepH||0)+'h'+(d.sleepMin?d.sleepMin+'m':''):'–';
-    const stepsPct=Math.min(100,Math.round((d.steps||0)/g.steps*100));
-    const waterPct=Math.min(100,Math.round((d.water||0)/g.water*100));
-    rows+=`<div class="saude-hist-item">
-      <span style="color:var(--muted);width:44px;flex-shrink:0">${label}</span>
-      <span style="flex:1;text-align:center">👟 ${(d.steps||0).toLocaleString('pt-BR')} <span style="font-size:10px;color:var(--muted)">${stepsPct}%</span></span>
-      <span style="flex:1;text-align:center">🌙 ${sleepStr}</span>
-      <span style="flex:1;text-align:right">💧 ${(d.water||0)}ml <span style="font-size:10px;color:var(--muted)">${waterPct}%</span></span>
-    </div>`;
-  }
-  document.getElementById('saude-hist-list').innerHTML=rows||'<div style="font-size:13px;color:var(--muted)">Sem dados ainda.</div>';
+function addWater(amount){
+  const sd=getSaudeData(saudeDateKey(saudeOff));sd.water=Math.max(0,sd.water+amount);save();
+  const waterGoal=S.settings.waterGoal||2000;
+  document.getElementById('sd-water').textContent=sd.water.toLocaleString('pt-BR');
+  document.getElementById('sd-water-bar').style.width=Math.min(100,sd.water/waterGoal*100)+'%';
+  showToast(amount>0?'+'+amount+'ml':''+amount+'ml');
 }
-
-// ── FATSECRET ────────────────────────────────────────────
-const FS_KEY = 'fde7249699ad446192e974a798d7b865';
-const FS_SECRET = 'a33f9b3ebcd4402699b67367b06fe5bb';
-
-let fsMealType = 'almoco'; // current meal selection
-
-function setFsMeal(meal){
-  fsMealType = meal;
-  document.querySelectorAll('[id^="fsmeal-"]').forEach(b=>{
-    b.classList.toggle('active', b.id === 'fsmeal-'+meal);
-  });
+function setFsMeal(meal){fsMeal=meal;['cafe','almoco','lanche','jantar'].forEach(m=>{const b=document.getElementById('fsmeal-'+m);if(b)b.className='meal-sel-btn'+(m===meal?' active':'');});}
+function fsSearch(){
+  const q=document.getElementById('fs-search-input').value.trim().toLowerCase();
+  if(!q){document.getElementById('fs-results').innerHTML='';return;}
+  fsSearchResults=FOODS.filter(f=>f.n.toLowerCase().includes(q));
+  if(!fsSearchResults.length){document.getElementById('fs-results').innerHTML='<div style="font-size:13px;color:var(--muted);padding:8px 0">Nenhum alimento encontrado.</div>';return;}
+  document.getElementById('fs-results').innerHTML=fsSearchResults.map((f,i)=>
+    `<div class="fs-result-item" onclick="addFoodEntry(${i})"><div style="flex:1"><div style="font-size:14px;font-weight:500">${f.n}</div><div style="font-size:12px;color:var(--muted)">${f.kcal}kcal · ${f.prot}g P · ${f.carb}g C · ${f.fat}g G (100g)</div></div><span style="color:var(--accent);font-size:22px;line-height:1;flex-shrink:0">+</span></div>`
+  ).join('');
 }
-
-// OAuth 1.0 signature generator
-function fsOAuthHeader(method, url, params){
-  const nonce = Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2);
-  const ts = Math.floor(Date.now()/1000).toString();
-  const oauthParams = {
-    oauth_consumer_key: FS_KEY,
-    oauth_nonce: nonce,
-    oauth_signature_method: 'HMAC-SHA1',
-    oauth_timestamp: ts,
-    oauth_version: '1.0'
-  };
-  const allParams = {...params, ...oauthParams};
-  const sortedKeys = Object.keys(allParams).sort();
-  const paramStr = sortedKeys.map(k=>encodeURIComponent(k)+'='+encodeURIComponent(allParams[k])).join('&');
-  const baseStr = method.toUpperCase()+'&'+encodeURIComponent(url)+'&'+encodeURIComponent(paramStr);
-  const sigKey = encodeURIComponent(FS_SECRET)+'&';
-  // We'll sign via CryptoSubtle
-  return {baseStr, sigKey, oauthParams, nonce, ts};
+function addFoodEntry(i){
+  const f=fsSearchResults[i];const sd=getSaudeData(saudeDateKey(saudeOff));
+  sd.meals.push({name:f.n+' (100g)',meal:fsMeal,kcal:f.kcal,prot:f.prot,carb:f.carb,fat:f.fat});
+  save();document.getElementById('fs-search-input').value='';document.getElementById('fs-results').innerHTML='';
+  renderSaude();showToast(f.n+' adicionado!');
 }
-
-async function fsHmacSha1(key, msg){
-  const enc = new TextEncoder();
-  const cryptoKey = await crypto.subtle.importKey('raw', enc.encode(key),
-    {name:'HMAC', hash:'SHA-1'}, false, ['sign']);
-  const sig = await crypto.subtle.sign('HMAC', cryptoKey, enc.encode(msg));
-  return btoa(String.fromCharCode(...new Uint8Array(sig)));
-}
-
-async function fsCall(method, extraParams={}){
-  const url = 'https://platform.fatsecret.com/rest/server.api';
-  const params = {method, format:'json', ...extraParams};
-  const {baseStr, sigKey, oauthParams} = fsOAuthHeader('GET', url, params);
-  const sig = await fsHmacSha1(sigKey, baseStr);
-  const allParams = {...params, ...oauthParams, oauth_signature: sig};
-  const qs = Object.keys(allParams).sort().map(k=>encodeURIComponent(k)+'='+encodeURIComponent(allParams[k])).join('&');
-  const targetUrl = url + '?' + qs;
-  // Try multiple CORS proxies in order
-  const proxies = [
-    'https://api.allorigins.win/raw?url=' + encodeURIComponent(targetUrl),
-    'https://corsproxy.io/?' + encodeURIComponent(targetUrl),
-    'https://thingproxy.freeboard.io/fetch/' + targetUrl,
-  ];
-  let lastErr;
-  for(const proxyUrl of proxies){
-    try{
-      const res = await fetch(proxyUrl, {signal: AbortSignal.timeout(8000)});
-      if(!res.ok) throw new Error('HTTP '+res.status);
-      const text = await res.text();
-      return JSON.parse(text);
-    } catch(e){ lastErr=e; console.warn('Proxy failed:', proxyUrl, e.message); }
-  }
-  throw lastErr;
-}
-
-async function fsSearch(){
-  const q = document.getElementById('fs-search-input').value.trim();
-  if(!q){showToast('Digite um alimento');return;}
-  const el = document.getElementById('fs-results');
-  el.style.display='block';
-  el.innerHTML='<div class="fs-loading">Buscando...</div>';
-  try{
-    const data = await fsCall('foods.search', {search_expression: q, max_results: 8});
-    const foods = data?.foods?.food;
-    if(!foods){ el.innerHTML='<div class="fs-loading">Nenhum resultado.</div>'; return; }
-    const list = Array.isArray(foods) ? foods : [foods];
-    el.innerHTML = list.map(f=>{
-      const desc = f.food_description||'';
-      const calMatch = desc.match(/Calories:\s*([\d.]+)kcal/i);
-      const cal = calMatch ? Math.round(calMatch[1]) : '?';
-      const name = f.food_name||(f.food_description||'').split('|')[0].trim();
-      return `<div class="fs-result-item">
-        <div class="fs-result-name">${name}</div>
-        <div class="fs-result-cal">${cal} kcal</div>
-        <button class="fs-result-add" onclick="fsAddFood(${f.food_id},'${encodeURIComponent(name)}',${cal},'${encodeURIComponent(desc)}')">+ Add</button>
-      </div>`;
-    }).join('');
-  } catch(e){
-    el.innerHTML='<div class="fs-loading" style="color:var(--red)">Erro na busca. Tente novamente.</div>';
-    console.error(e);
-  }
-}
-
-async function fsAddFood(foodId, encodedName, calEst, encodedDesc){
-  const name = decodeURIComponent(encodedName);
-  const desc = decodeURIComponent(encodedDesc);
-  // parse macros from description: "Per 100g - Calories: 89kcal | Fat: 0.33g | Carbs: 23g | Protein: 1.09g"
-  const cal  = parseFloat(desc.match(/Calories:\s*([\d.]+)/i)?.[1]||calEst||0);
-  const fat  = parseFloat(desc.match(/Fat:\s*([\d.]+)/i)?.[1]||0);
-  const carb = parseFloat(desc.match(/Carbs?:\s*([\d.]+)/i)?.[1]||0);
-  const prot = parseFloat(desc.match(/Protein:\s*([\d.]+)/i)?.[1]||0);
-  const dateKey = saudeDateKey(0);
-  if(!S.saudeLog) S.saudeLog={};
-  if(!S.saudeLog[dateKey]) S.saudeLog[dateKey]={steps:0,sleepH:0,sleepMin:0,water:0};
-  if(!S.saudeLog[dateKey].meals) S.saudeLog[dateKey].meals=[];
-  S.saudeLog[dateKey].meals.push({name, cal:Math.round(cal), fat:Math.round(fat*10)/10, carb:Math.round(carb*10)/10, prot:Math.round(prot*10)/10, meal:fsMealType});
-  save();
-  document.getElementById('fs-results').style.display='none';
-  document.getElementById('fs-search-input').value='';
-  renderFsMeals();
-  showToast(name+' adicionado!');
-}
-
-function fsDeleteFood(idx){
-  const dateKey = saudeDateKey(saudeDateOff);
-  const d = getSaudeDay(saudeDateOff);
-  if(d.meals) d.meals.splice(idx,1);
-  save(); renderFsMeals(); showToast('Removido.');
-}
-
-function renderFsMeals(){
-  const d = getSaudeDay(saudeDateOff);
-  const meals = d.meals||[];
-  const totCal  = meals.reduce((a,m)=>a+m.cal,0);
-  const totProt = meals.reduce((a,m)=>a+m.prot,0);
-  const totCarb = meals.reduce((a,m)=>a+m.carb,0);
-  const totFat  = meals.reduce((a,m)=>a+m.fat,0);
-  document.getElementById('fs-cal').textContent  = Math.round(totCal);
-  document.getElementById('fs-prot').textContent = Math.round(totProt)+'g';
-  document.getElementById('fs-carb').textContent = Math.round(totCarb)+'g';
-  document.getElementById('fs-fat').textContent  = Math.round(totFat)+'g';
-  // show/hide search for past days
-  const isPast = saudeDateOff < 0;
-  document.getElementById('fs-search-input').parentElement.style.display = isPast ? 'none' : 'flex';
-  document.getElementById('fs-meal-select').style.display = isPast ? 'none' : 'flex';
-  if(!meals.length){
-    document.getElementById('fs-meals-list').innerHTML='<div style="font-size:13px;color:var(--muted)">Nenhum alimento registrado.</div>';
-    return;
-  }
-  const mealLabels={cafe:'☕ Café',almoco:'🍽 Almoço',lanche:'🥪 Lanche',jantar:'🌙 Jantar'};
-  const grouped={cafe:[],almoco:[],lanche:[],jantar:[]};
-  meals.forEach((m,i)=>{ if(grouped[m.meal]) grouped[m.meal].push({...m,idx:i}); else grouped.lanche.push({...m,idx:i}); });
+function renderFsMeals(sd,dateISO){
+  const names={cafe:'☕ Café',almoco:'🍽 Almoço',lanche:'🥪 Lanche',jantar:'🌙 Jantar'};
+  const byMeal={cafe:[],almoco:[],lanche:[],jantar:[]};
+  (sd.meals||[]).forEach((m,i)=>{if(byMeal[m.meal])byMeal[m.meal].push({...m,idx:i});});
   let html='';
-  for(const [mealKey, items] of Object.entries(grouped)){
-    if(!items.length) continue;
-    html+=`<div class="fs-meal-section">${mealLabels[mealKey]}</div>`;
-    html+=items.map(m=>`<div class="fs-meal-item">
-      <div class="fs-meal-body">
-        <div class="fs-meal-name">${m.name}</div>
-        <div class="fs-meal-macro">${m.cal} kcal · P ${m.prot}g · C ${m.carb}g · G ${m.fat}g</div>
-      </div>
-      ${!isPast?`<button class="fs-meal-del" onclick="fsDeleteFood(${m.idx})">🗑</button>`:''}
-    </div>`).join('');
-  }
-  document.getElementById('fs-meals-list').innerHTML=html;
+  ['cafe','almoco','lanche','jantar'].forEach(k=>{
+    const items=byMeal[k];if(!items.length)return;
+    html+=`<div style="margin-bottom:10px"><div style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">${names[k]}</div>`;
+    html+=items.map(m=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:0.5px solid var(--border)"><div><div style="font-size:13px">${m.name}</div><div style="font-size:12px;color:var(--muted)">${Math.round(m.kcal)}kcal · ${Math.round(m.prot)}g P</div></div><button onclick="removeFoodEntry('${dateISO}',${m.idx})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:4px;line-height:1">✕</button></div>`).join('');
+    html+='</div>';
+  });
+  document.getElementById('fs-meals-list').innerHTML=html||'<div style="font-size:13px;color:var(--muted)">Nenhum alimento registrado hoje.</div>';
 }
-
-// ── NAV ──────────────────────────────────────────────────
-function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
-function setHeader(t,s){document.getElementById('screen-title').textContent=t;document.getElementById('screen-sub').textContent=s;}
-function closeModal(id){document.getElementById(id).classList.remove('open');}
-function showTab(tab){
-  document.querySelectorAll('#bottom-nav button').forEach(b=>b.classList.remove('active'));
-  const nb=document.getElementById('nav-'+tab);if(nb)nb.classList.add('active');
-  if(tab==='home'){showScreen('home-screen');const n=S.profile.nome;setHeader(n?'Olá, '+n.split(' ')[0]:'Meu Treino','Bem-vindo');weekOff=0;renderHomeData();}
-  else if(tab==='treinos'){showScreen('treinos-screen');setHeader('Treinos','Selecione e comece');renderTreinosTab();}
-  else if(tab==='report'){showScreen('report-screen');setHeader('Relatório','Seu progresso');reportWeekOff=0;renderReport();}
-  else if(tab==='saude'){
-    showScreen('saude-screen');setHeader('Saúde','Bem-estar diário');
-    saudeDateOff=0; setFsMeal('almoco'); renderSaude();
+function removeFoodEntry(dateISO,idx){const sd=getSaudeData(dateISO);sd.meals.splice(idx,1);save();renderSaude();}
+function renderSaudeHist(){
+  let html='';
+  for(let i=6;i>=0;i--){
+    const dateISO=saudeDateKey(-i);const d=new Date(dateISO);const sd=S.saudeLog[dateISO];
+    if(!sd||(!sd.steps&&!sd.water&&!sd.sleep&&(!sd.meals||!sd.meals.length)))continue;
+    const lbl=i===0?'Hoje':i===1?'Ontem':d.toLocaleDateString('pt-BR',{weekday:'short',day:'numeric'});
+    html+=`<div class="saude-hist-item"><span style="font-weight:500">${lbl}</span><span style="color:var(--muted);font-size:12px">${sd.steps?'👟'+sd.steps.toLocaleString('pt-BR')+' ':''}${sd.water?'💧'+sd.water+'ml ':''}${sd.sleep?'🌙'+sd.sleep.hours+'h':''}</span></div>`;
   }
-  else if(tab==='settings'){
-    showScreen('settings-screen');setHeader('Configurações','Personalizar');
-    document.getElementById('wakelock-toggle').checked=!!S.settings.wakeLock;
-    document.getElementById('rest-desc').textContent=fmtT(S.settings.restSecs)+' entre séries';
-    document.getElementById('goal-desc').textContent=S.settings.weekGoal+' treinos por semana';
-    const p=S.profile;document.getElementById('profile-desc').textContent=p.nome?p.nome+(p.altura?' · '+p.altura+'cm':''):'Nome, idade, altura, peso...';
-    document.getElementById('sub-settings').style.display='none';profSexo=p.sexo||'';
-  }
-}
-function showToast(msg){
-  let t=document.getElementById('toast');
-  if(!t){t=document.createElement('div');t.id='toast';t.style.cssText='position:fixed;bottom:85px;left:50%;transform:translateX(-50%);background:#1e1e1e;border:0.5px solid rgba(255,255,255,.15);color:#f1f0f5;padding:9px 18px;border-radius:20px;font-size:13px;z-index:999;transition:opacity .3s;white-space:nowrap';document.body.appendChild(t);}
-  t.textContent=msg;t.style.opacity='1';clearTimeout(t._t);t._t=setTimeout(()=>{t.style.opacity='0';},2200);
+  document.getElementById('saude-hist-list').innerHTML=html||'<div style="font-size:13px;color:var(--muted)">Nenhum registro nos últimos 7 dias.</div>';
 }
 
 // ── PWA ──────────────────────────────────────────────────
 let dP;
-window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();dP=e;document.getElementById('install-banner').style.display='flex';});
-document.getElementById('install-btn').onclick=async()=>{if(!dP)return;dP.prompt();await dP.userChoice;dP=null;document.getElementById('install-banner').style.display='none';};
-document.getElementById('dismiss-install').onclick=()=>{document.getElementById('install-banner').style.display='none';};
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').catch(()=>{});}
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();dP=e;const b=document.getElementById('install-banner');if(b)b.style.display='flex';});
+const _installBtn=document.getElementById('install-btn');
+if(_installBtn)_installBtn.onclick=async()=>{if(!dP)return;dP.prompt();await dP.userChoice;dP=null;const b=document.getElementById('install-banner');if(b)b.style.display='none';};
+const _dismissBtn=document.getElementById('dismiss-install');
+if(_dismissBtn)_dismissBtn.onclick=()=>{const b=document.getElementById('install-banner');if(b)b.style.display='none';};
+if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
 
 // ── INIT ─────────────────────────────────────────────────
-// Init — activate home screen via JS so all screens start hidden
-showTab('home');
+(function(){
+  const n=S.profile.nome;
+  document.getElementById('screen-title').textContent=n?'Olá, '+n.split(' ')[0]:'Meu Treino';
+  document.getElementById('screen-sub').textContent='Bem-vindo';
+  document.getElementById('wakelock-toggle').checked=!!S.settings.wakeLock;
+  renderHomeData();
+})();
 </script>
 </body>
 </html>
