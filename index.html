@@ -714,6 +714,24 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
       <button class="modal-cancel" onclick="closeModal('saude-modal')">Cancelar</button>
     </div>
   </div>
+  <!-- EDIT LOG MODAL -->
+  <div id="edit-log-modal" class="modal-overlay">
+    <div class="modal-sheet">
+      <h3>Editar Treino</h3>
+      <div class="ms-sub" id="elm-sub" style="margin-bottom:14px"></div>
+      <div id="elm-exs"></div>
+      <div class="modal-row" style="margin-top:14px">
+        <label>Duração (min)</label>
+        <input class="modal-input" type="number" id="elm-dur" min="0" max="300" placeholder="Ex: 45">
+      </div>
+      <div class="modal-row">
+        <label>Calorias queimadas</label>
+        <input class="modal-input" type="number" id="elm-cal" min="0" placeholder="Ex: 300">
+      </div>
+      <button class="modal-save" style="margin-top:16px" onclick="saveEditLog()">Salvar</button>
+      <button class="modal-cancel" onclick="closeModal('edit-log-modal')">Cancelar</button>
+    </div>
+  </div>
   <!-- CONFIRM MODAL -->
   <div id="confirm-modal" class="modal-overlay">
     <div class="modal-sheet">
@@ -888,7 +906,7 @@ function clickDay(i){
     logs.forEach(log=>{
       const t=getTreinos().find(t=>t.id===log.treinoId);
       body+=`<div style="margin-bottom:14px"><div style="font-size:14px;font-weight:600;margin-bottom:8px;color:var(--accent)">${log.label}${log.dur?' · '+log.dur+'min':''}</div>`;
-      if(t)body+=t.exercicios.map(ex=>{const done=!!((wd.exDone||{})[ex.id]);return `<div class="dm-ex-row"><div class="dm-ex-check ${done?'done':''}">${done?ckSVG():''}</div><div><div class="dm-ex-name">${ex.nome}</div><div class="dm-ex-meta">${ex.series}×${ex.reps}</div></div></div>`;}).join('');
+      if(t){const logForDay=logs[0];const logIdx=logForDay?(S.workoutLog||[]).indexOf(logForDay):-1;const exDone=logForDay&&logForDay.exDone?logForDay.exDone:(wd.exDone||{});body+=t.exercicios.map(ex=>{const done=!!exDone[ex.id];const clickable=logIdx>=0?`onclick="toggleDayEx(${logIdx},'${ex.id}')" style="cursor:pointer"`:'';return `<div class="dm-ex-row" ${clickable} id="dme-${ex.id}"><div class="dm-ex-check ${done?'done':''}" id="dmchk-${ex.id}">${done?ckSVG():''}</div><div><div class="dm-ex-name">${ex.nome}</div><div class="dm-ex-meta">${ex.series}×${ex.reps}</div></div></div>`;}).join('');}
       body+='</div>';
     });
   } else {
@@ -1181,6 +1199,44 @@ function finishWorkout(){
   save();closeModal('finish-modal');showToast('Treino salvo! 💪');
 }
 function skipFinish(){resetTreinoState();save();closeModal('finish-modal');}
+let editLogIdx=-1;
+function openEditLog(idx){
+  editLogIdx=idx;
+  const log=(S.workoutLog||[])[idx];if(!log)return;
+  const t=getTreinos().find(t=>t.id===log.treinoId);
+  document.getElementById('elm-sub').textContent=log.label+' · '+log.date;
+  const exDone=log.exDone||{};
+  document.getElementById('elm-exs').innerHTML=t?t.exercicios.map(ex=>`
+    <div class="dm-ex-row" onclick="toggleElmEx('${ex.id}')" style="cursor:pointer">
+      <div class="dm-ex-check ${exDone[ex.id]?'done':''}" id="elmchk-${ex.id}">${exDone[ex.id]?ckSVG():''}</div>
+      <div><div class="dm-ex-name">${ex.nome}</div><div class="dm-ex-meta">${ex.series}×${ex.reps}</div></div>
+    </div>`).join(''):'';
+  document.getElementById('elm-dur').value=log.dur||'';
+  document.getElementById('elm-cal').value=log.cal||'';
+  document.getElementById('edit-log-modal').classList.add('open');
+}
+function toggleElmEx(exId){
+  const log=(S.workoutLog||[])[editLogIdx];if(!log)return;
+  if(!log.exDone)log.exDone={};
+  log.exDone[exId]=!log.exDone[exId];
+  const chk=document.getElementById('elmchk-'+exId);
+  if(chk){chk.className='dm-ex-check'+(log.exDone[exId]?' done':'');chk.innerHTML=log.exDone[exId]?ckSVG():'';}
+}
+function toggleDayEx(logIdx,exId){
+  const log=(S.workoutLog||[])[logIdx];if(!log)return;
+  if(!log.exDone)log.exDone={};
+  log.exDone[exId]=!log.exDone[exId];
+  const chk=document.getElementById('dmchk-'+exId);
+  if(chk){chk.className='dm-ex-check'+(log.exDone[exId]?' done':'');chk.innerHTML=log.exDone[exId]?ckSVG():'';}
+  save();
+}
+function saveEditLog(){
+  const log=(S.workoutLog||[])[editLogIdx];if(!log)return;
+  const d=parseInt(document.getElementById('elm-dur').value)||0;
+  const c=parseInt(document.getElementById('elm-cal').value)||0;
+  log.dur=d;log.cal=c;
+  save();closeModal('edit-log-modal');renderReport();showToast('Treino atualizado!');
+}
 function deleteWorkoutLog(i){
   document.getElementById('confirm-modal-title').textContent='Apagar registro';
   document.getElementById('confirm-modal-msg').textContent='Apagar este registro do histórico?';
@@ -1253,8 +1309,9 @@ function renderReport(){
   }).join(''):'<div style="font-size:13px;color:var(--muted);padding:4px 0">Nenhum registro ainda.</div>';
   const wlog=S.workoutLog||[];
   document.getElementById('wlog-list').innerHTML=wlog.length?wlog.slice(0,10).map((w,i)=>`
-    <div class="wlog-item"><div><div class="wl-name">${w.label}</div><div class="wl-meta">${w.focus} · ${w.date}</div></div>
-      <div style="display:flex;align-items:center;gap:8px">${w.dur?`<div class="wl-dur">${w.dur}min</div>`:''}
+    <div class="wlog-item"><div><div class="wl-name">${w.label}</div><div class="wl-meta">${w.focus} · ${w.date}${w.dur?' · '+w.dur+'min':''}${w.cal?' · '+w.cal+' kcal':''}</div></div>
+      <div style="display:flex;align-items:center;gap:4px">
+        <button onclick="openEditLog(${i})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:15px;padding:2px 5px;line-height:1" title="Editar">✏️</button>
         <button onclick="deleteWorkoutLog(${i})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:2px 4px;line-height:1">✕</button>
       </div></div>`).join(''):'<div style="font-size:13px;color:var(--muted);padding:4px 0">Nenhum treino registrado ainda.</div>';
   renderBMI();
@@ -1280,13 +1337,21 @@ function renderReportWeekNav(){
 }
 function showReportDay(i){
   const ws=weekStart(reportWeekOff);const d=new Date(ws);d.setDate(ws.getDate()+i);
-  const dateISO=d.toISOString().slice(0,10);const wd=getWD(weekKey(reportWeekOff));
+  const dateISO=d.toISOString().slice(0,10);
   const logs=(S.workoutLog||[]).filter(w=>w.dateISO===dateISO);
   const det=document.getElementById('report-day-detail');
   const dateStr=d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
   det.innerHTML=logs.length===0?`<div style="font-size:13px;color:var(--muted)">${dateStr.charAt(0).toUpperCase()+dateStr.slice(1)} — sem treino registrado</div>`:
-    logs.map(log=>`<div><div style="font-size:13px;font-weight:600;color:var(--accent);margin-bottom:6px">${log.label}${log.dur?' · '+log.dur+'min':''}</div>
-      ${(getTreinos().find(t=>t.id===log.treinoId)?.exercicios||[]).map(ex=>{const done=!!((wd.exDone||{})[ex.id]);return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:0.5px solid var(--border)"><div style="width:18px;height:18px;border-radius:50%;${done?'background:var(--green);color:#052e16':'border:1.5px solid var(--border2)'};display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0">${done?'✓':''}</div><span style="font-size:13px">${ex.nome}</span></div>`;}).join('')}</div>`).join('');
+    logs.map(log=>{
+      const logIdx=(S.workoutLog||[]).indexOf(log);
+      const exDone=log.exDone||{};
+      return `<div style="margin-bottom:10px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <div style="font-size:13px;font-weight:600;color:var(--accent)">${log.label}${log.dur?' · '+log.dur+'min':''}${log.cal?' · '+log.cal+' kcal':''}</div>
+          <button onclick="openEditLog(${logIdx})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:2px 6px;line-height:1" title="Editar">✏️</button>
+        </div>
+        ${(getTreinos().find(t=>t.id===log.treinoId)?.exercicios||[]).map(ex=>{const done=!!exDone[ex.id];return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:0.5px solid var(--border)"><div style="width:18px;height:18px;border-radius:50%;${done?'background:var(--green);color:#052e16':'border:1.5px solid var(--border2)'};display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0">${done?'✓':''}</div><span style="font-size:13px">${ex.nome}</span></div>`;}).join('')}</div>`;
+    }).join('');
   det.style.display='block';
 }
 function openWeightModal(){
