@@ -359,7 +359,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
   <div id="content">
 
     <!-- HOME -->
-    <div id="home-screen" class="screen active">
+    <div id="home-screen" class="screen">
       <div id="install-banner" style="display:none">
         <span>Instale para usar offline</span>
         <button id="install-btn">Instalar</button>
@@ -596,6 +596,15 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
   </div>
 
   <!-- MODALS -->
+
+
+
+
+  <!-- SAÚDE EDIT MODAL -->
+
+
+
+
   <div id="finish-modal" class="modal-overlay">
     <div class="modal-sheet">
       <h3 style="color:var(--green)">Treino concluído! 💪</h3>
@@ -714,8 +723,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
 
   </div>
 
-
-  <!-- SAÚDE EDIT MODAL -->
   <div id="saude-modal" class="modal-overlay">
     <div class="modal-sheet">
       <h3 id="saude-modal-title">Registrar</h3>
@@ -733,7 +740,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
       <button class="modal-cancel" onclick="closeModal('saude-modal')">Cancelar</button>
     </div>
   </div>
-
   <!-- CONFIRM MODAL -->
   <div id="confirm-modal" class="modal-overlay">
     <div class="modal-sheet">
@@ -1901,9 +1907,8 @@ document.getElementById('dismiss-install').onclick=()=>{document.getElementById(
 if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').catch(()=>{});}
 
 // ── INIT ─────────────────────────────────────────────────
-const n=S.profile.nome;
-if(n){document.getElementById('screen-title').textContent='Olá, '+n.split(' ')[0];document.getElementById('screen-sub').textContent='Bem-vindo';}
-renderHomeData();
+// Init — activate home screen via JS so all screens start hidden
+showTab('home');
 </script>
 </body>
 </html>
