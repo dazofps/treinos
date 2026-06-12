@@ -932,14 +932,16 @@ function clickDay(i){
     });
   } else {
     const treinos = getTreinos();
+    const dateFormatted=d.toLocaleDateString('pt-BR');
     const treinoOpts = treinos.map(t=>
       `<button class="dm-manual-btn" style="margin-bottom:6px;text-align:left;display:block;width:100%" onclick="setManualDayWithTreino(${i},'${t.id}')">${t.label} — ${t.focus}</button>`
     ).join('');
+    const runBtn=`<button class="dm-manual-btn" style="margin-bottom:6px;text-align:left;display:block;width:100%;border-color:rgba(251,146,60,.4);color:#fb923c" onclick="closeModal('day-modal');openRunModal({dayIdx:${i},dateISO:'${dateISO}',dateFormatted:'${dateFormatted}'})">🏃 Corrida — Cardio · Aeróbico</button>`;
     body=`
     <div style="font-size:13px;color:var(--muted);margin-bottom:12px">Nenhum treino registrado neste dia.</div>
     ${trained?`<div style="font-size:13px;color:var(--green);margin-bottom:12px;font-weight:500">✓ Marcado como treinado</div>`:''}
     <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:10px">Qual treino foi feito?</div>
-    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">${treinoOpts}</div>
+    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">${treinoOpts}${runBtn}</div>
     <button class="dm-manual-btn" style="color:var(--muted);border-color:rgba(255,255,255,.08)" onclick="setManualDay(${i},false)">✕ Não treinei neste dia</button>`;
   }
   document.getElementById('day-modal-title').textContent=dateStr.charAt(0).toUpperCase()+dateStr.slice(1);
@@ -1235,9 +1237,11 @@ function finishWorkout(){
   save();closeModal('finish-modal');showToast('Treino salvo! 💪');
 }
 function skipFinish(){resetTreinoState();save();closeModal('finish-modal');}
-function openRunModal(){
-  const now=new Date();
-  document.getElementById('run-modal-date').textContent=now.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
+let runDayCtx=null;
+function openRunModal(dayCtx){
+  runDayCtx=dayCtx||null;
+  const d=dayCtx?new Date(dayCtx.dateISO):new Date();
+  document.getElementById('run-modal-date').textContent=d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
   document.getElementById('run-dur').value='';
   document.getElementById('run-km').value='';
   document.getElementById('run-cal').value='';
@@ -1249,15 +1253,21 @@ function saveRun(){
   const km=parseFloat(document.getElementById('run-km').value)||0;
   const cal=parseInt(document.getElementById('run-cal').value)||0;
   if(!dur&&!km){showToast('Informe ao menos duração ou distância');return;}
-  const now=new Date();
-  const dateISO=now.toISOString().slice(0,10);
-  const focus='Cardio'+( km?' · '+km+'km':'')+(dur?' · '+dur+'min':'');
-  S.workoutLog.unshift({treinoId:'run',label:'Corrida',focus,date:now.toLocaleDateString('pt-BR'),dateISO,dur,km,cal});
-  // Mark day trained & count toward weekly goal
-  const wd=getWD(weekKey(0));
+  let dateISO,dateFormatted,dayOfWeek,wk;
+  if(runDayCtx){
+    dateISO=runDayCtx.dateISO;dateFormatted=runDayCtx.dateFormatted;
+    const d=new Date(dateISO);dayOfWeek=d.getDay();wk=weekKeyForDate(d);
+  } else {
+    const now=new Date();dateISO=now.toISOString().slice(0,10);dateFormatted=now.toLocaleDateString('pt-BR');dayOfWeek=now.getDay();wk=weekKey(0);
+  }
+  const focus='Cardio'+(km?' · '+km+'km':'')+(dur?' · '+dur+'min':'');
+  S.workoutLog=S.workoutLog.filter(w=>!(w.dateISO===dateISO&&w.treinoId==='run'&&w.manual));
+  S.workoutLog.push({treinoId:'run',label:'Corrida',focus,date:dateFormatted,dateISO,dur,km,cal,manual:!!runDayCtx});
+  S.workoutLog.sort((a,b)=>b.dateISO.localeCompare(a.dateISO));
+  const wd=getWD(wk);
   if(!wd.done)wd.done={};if(!wd.daysTrained)wd.daysTrained={};
-  wd.done['run_'+dateISO]=true;
-  wd.daysTrained[now.getDay()]=true;
+  wd.done['run_'+dateISO]=true;wd.daysTrained[dayOfWeek]=true;
+  runDayCtx=null;
   save();closeModal('run-modal');renderHomeData();if(typeof renderTreinosTab==='function')renderTreinosTab();
   showToast('Corrida registrada! 🏃');
 }
