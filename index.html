@@ -255,6 +255,43 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
 .dm-manual-row{display:flex;gap:10px;margin-top:14px}
 .dm-manual-btn{flex:1;padding:12px;border-radius:var(--radius-sm);border:0.5px solid var(--border2);background:var(--bg3);color:var(--text);font-size:14px;font-weight:500;cursor:pointer}
 .dm-manual-btn.active{background:var(--accent2);border-color:var(--accent2);color:white}
+
+/* ── TREINO CARD MENU ── */
+.tc-menu-btn{position:absolute;top:10px;right:10px;width:30px;height:30px;border-radius:50%;background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2;line-height:1}
+.tc-menu-btn:active{background:var(--bg3)}
+.tc-popup{position:absolute;top:36px;right:8px;background:var(--bg3);border:0.5px solid var(--border2);border-radius:var(--radius-sm);overflow:hidden;z-index:10;min-width:130px;box-shadow:0 4px 20px rgba(0,0,0,.5)}
+.tc-popup button{display:block;width:100%;padding:11px 16px;background:none;border:none;color:var(--text);font-size:14px;text-align:left;cursor:pointer}
+.tc-popup button:active{background:var(--bg4)}
+.tc-popup button.danger{color:var(--red)}
+.tc-popup .tc-pop-div{height:0.5px;background:var(--border2)}
+
+/* ── TREINO EDITOR ── */
+#editor-screen{padding-top:4px}
+.editor-header{display:flex;align-items:center;gap:10px;padding:12px 0 16px}
+.editor-header h2{font-size:17px;font-weight:700;flex:1}
+.editor-field{margin-bottom:12px}
+.editor-field label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600;display:block;margin-bottom:6px}
+.editor-input{width:100%;background:var(--bg2);border:0.5px solid var(--border2);border-radius:var(--radius-sm);padding:11px 13px;color:var(--text);font-size:14px;outline:none;-webkit-appearance:none}
+.editor-input:focus{border-color:var(--accent)}
+.ex-editor-card{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:8px;position:relative}
+.ex-editor-top{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.ex-editor-drag{color:var(--muted);font-size:18px;cursor:grab;padding:2px 4px;touch-action:none;flex-shrink:0}
+.ex-editor-name{flex:1;background:var(--bg3);border:0.5px solid var(--border2);border-radius:var(--radius-xs);padding:8px 10px;color:var(--text);font-size:14px;outline:none}
+.ex-editor-name:focus{border-color:var(--accent)}
+.ex-editor-del{background:none;border:none;color:var(--red);font-size:18px;cursor:pointer;padding:4px;flex-shrink:0;line-height:1}
+.ex-editor-row{display:flex;gap:8px;margin-bottom:6px}
+.ex-editor-row label{font-size:11px;color:var(--muted);width:50px;flex-shrink:0;padding-top:9px}
+.ex-editor-row input{flex:1;background:var(--bg3);border:0.5px solid var(--border2);border-radius:var(--radius-xs);padding:7px 10px;color:var(--text);font-size:13px;outline:none;-webkit-appearance:none}
+.ex-editor-row input:focus{border-color:var(--accent)}
+.ex-editor-muscle{flex:1;background:var(--bg3);border:0.5px solid var(--border2);border-radius:var(--radius-xs);padding:7px 10px;color:var(--text);font-size:13px;outline:none}
+.add-ex-btn{width:100%;padding:12px;background:var(--bg2);border:0.5px dashed var(--border2);border-radius:var(--radius);color:var(--accent);font-size:14px;cursor:pointer;margin-bottom:16px;display:flex;align-items:center;justify-content:center;gap:6px}
+.add-ex-btn:active{background:var(--bg3)}
+.editor-save-btn{width:100%;padding:15px;background:var(--accent2);color:white;border:none;border-radius:var(--radius);font-size:15px;font-weight:700;cursor:pointer;margin-bottom:8px}
+.editor-save-btn:active{opacity:.85}
+.editor-del-btn{width:100%;padding:12px;background:none;border:0.5px solid rgba(248,113,113,.3);border-radius:var(--radius);color:var(--red);font-size:14px;cursor:pointer;margin-bottom:16px}
+.editor-del-btn:active{background:rgba(248,113,113,.08)}
+.add-treino-btn{width:100%;padding:14px;background:var(--bg2);border:0.5px dashed var(--border2);border-radius:var(--radius);color:var(--accent);font-size:14px;font-weight:600;cursor:pointer;margin-top:4px;display:flex;align-items:center;justify-content:center;gap:8px}
+.add-treino-btn:active{background:var(--bg3)}
 </style>
 </head>
 <body>
@@ -320,6 +357,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
     <div id="treinos-screen" class="screen">
       <p class="section-label" style="margin-top:8px">Selecione o treino</p>
       <div id="treino-cards"></div>
+      <button class="add-treino-btn" onclick="openEditor(null)">＋ Criar novo treino</button>
     </div>
 
     <!-- TREINO PREVIEW -->
@@ -331,6 +369,27 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
       <div class="preview-focus" id="preview-focus"></div>
       <div id="preview-ex-list"></div>
       <button class="start-treino-btn" id="start-treino-btn">▶ Iniciar treino</button>
+    </div>
+
+    <!-- TREINO EDITOR -->
+    <div id="editor-screen" class="screen">
+      <div class="editor-header">
+        <button class="back-btn" id="editor-back">← Voltar</button>
+        <h2 id="editor-title">Novo treino</h2>
+      </div>
+      <div class="editor-field">
+        <label>Nome do treino</label>
+        <input class="editor-input" id="editor-name" placeholder="Ex: Treino A">
+      </div>
+      <div class="editor-field">
+        <label>Descrição (músculos)</label>
+        <input class="editor-input" id="editor-focus" placeholder="Ex: Peito · Ombro · Tríceps">
+      </div>
+      <p class="section-label" style="margin-top:4px">Exercícios</p>
+      <div id="editor-ex-list"></div>
+      <button class="add-ex-btn" onclick="addEditorEx()">＋ Adicionar exercício</button>
+      <button class="editor-save-btn" onclick="saveEditor()">Salvar treino</button>
+      <button class="editor-del-btn" id="editor-del-btn" onclick="deleteEditorTreino()" style="display:none">Excluir treino</button>
     </div>
 
     <!-- LIST -->
@@ -501,6 +560,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
               <button class="wn-btn" onclick="setEditTreino('a')" id="edit-btn-a">A</button>
               <button class="wn-btn" onclick="setEditTreino('b')" id="edit-btn-b">B</button>
               <button class="wn-btn" onclick="setEditTreino('c')" id="edit-btn-c">C</button>
+              <button class="wn-btn" onclick="setEditTreino('d')" id="edit-btn-d">D</button>
             </div>
           </div>
           <div id="exedit-form"></div>
@@ -773,13 +833,14 @@ function renderHomeData(){
 }
 
 // ── TREINOS TAB ──────────────────────────────────────────
+let openMenuId = null;
 function renderTreinosTab(){
   const key=weekKey(0);const wd=getWD(key);
   document.getElementById('treino-cards').innerHTML=getTreinos().map(t=>{
     const done=!!(wd.done&&wd.done[t.id]);
     const exs=t.exercicios;
     const exDoneCount=exs.filter(e=>(wd.exDone||{})[e.id]).length;
-    return `<div class="treino-card ${done?'done':''}" onclick="previewTreino('${t.id}')">
+    return `<div class="treino-card ${done?'done':''}" onclick="previewTreino('${t.id}')" style="padding-right:44px">
       <div class="tc-icon">${t.icon||t.id.toUpperCase()}</div>
       <div class="tc-body">
         <div class="tc-label">${t.label}</div>
@@ -787,9 +848,41 @@ function renderTreinosTab(){
         <div class="tc-sub">${exs.length} exercícios · ${done?'Concluído hoje':`${exDoneCount}/${exs.length} feitos`}</div>
       </div>
       <div class="tc-badge">Feito</div>
-      <div class="tc-arrow">›</div>
+      <button class="tc-menu-btn" onclick="toggleTreinoMenu(event,'${t.id}')">⋮</button>
+      <div class="tc-popup" id="menu-${t.id}" style="display:none">
+        <button onclick="openEditor('${t.id}');event.stopPropagation()">✏️ Editar</button>
+        <div class="tc-pop-div"></div>
+        <button class="danger" onclick="confirmDeleteTreino('${t.id}');event.stopPropagation()">🗑 Excluir</button>
+      </div>
     </div>`;
   }).join('');
+}
+function toggleTreinoMenu(e, id){
+  e.stopPropagation();
+  const popup = document.getElementById('menu-'+id);
+  const isOpen = popup.style.display !== 'none';
+  // close all
+  document.querySelectorAll('.tc-popup').forEach(p=>p.style.display='none');
+  if(!isOpen){ popup.style.display='block'; openMenuId=id; }
+  else openMenuId=null;
+}
+document.addEventListener('click', ()=>{
+  if(openMenuId){ document.querySelectorAll('.tc-popup').forEach(p=>p.style.display='none'); openMenuId=null; }
+});
+function confirmDeleteTreino(id){
+  document.querySelectorAll('.tc-popup').forEach(p=>p.style.display='none');
+  const t=getTreinos().find(t=>t.id===id);
+  if(confirm('Excluir "'+t.label+'"? Isso não pode ser desfeito.')){
+    deleteTreino(id);
+  }
+}
+function deleteTreino(id){
+  // Remove from custom list if custom, or add to deletedIds if default
+  if(!S.treinosList) S.treinosList = getTreinos().map(t=>t.id);
+  S.treinosList = S.treinosList.filter(tid=>tid!==id);
+  // Also remove custom data for this treino
+  if(S.customTreinos && S.customTreinos[id]) delete S.customTreinos[id];
+  save(); renderTreinosTab(); showToast('Treino excluído.');
 }
 
 function previewTreino(id){
@@ -1107,7 +1200,7 @@ function renderNamesForm(){document.getElementById('names-form').innerHTML=getTr
 function saveNames(){if(!S.customTreinos)S.customTreinos={};DT.forEach(t=>{if(!S.customTreinos[t.id])S.customTreinos[t.id]={exercicios:{}};S.customTreinos[t.id].label=document.getElementById('nl-'+t.id).value||t.label;S.customTreinos[t.id].focus=document.getElementById('nf-'+t.id).value||t.focus;});save();renderTreinosTab();document.getElementById('sub-settings').style.display='none';showToast('Nomes salvos!');}
 function setEditTreino(id){
   editTid=id;
-  ['a','b','c'].forEach(x=>{const b=document.getElementById('edit-btn-'+x);b.style.background=x===id?'var(--accent2)':'';b.style.color=x===id?'white':'';b.style.borderColor=x===id?'var(--accent2)':'';});
+  ['a','b','c','d'].forEach(x=>{const b=document.getElementById('edit-btn-'+x);b.style.background=x===id?'var(--accent2)':'';b.style.color=x===id?'white':'';b.style.borderColor=x===id?'var(--accent2)':'';});
   const t=getTreinos().find(t=>t.id===id);
   document.getElementById('exedit-form').innerHTML=t.exercicios.map(ex=>`<div class="ex-edit-card"><h4>${ex.nome}</h4><div class="edit-row"><label>Séries</label><input class="edit-input" type="number" id="es-${ex.id}" value="${ex.series}" min="1" max="10"></div><div class="edit-row"><label>Reps</label><input class="edit-input" type="text" id="er-${ex.id}" value="${ex.reps}"></div></div>`).join('');
 }
@@ -1119,8 +1212,145 @@ function saveExEdit(){
   save();document.getElementById('sub-settings').style.display='none';showToast('Alterações salvas!');
 }
 function getTreinos(){
-  if(!S.customTreinos)return JSON.parse(JSON.stringify(DT));
-  return DT.map(t=>{const ct=S.customTreinos[t.id]||{};return{...t,label:ct.label||t.label,focus:ct.focus||t.focus,exercicios:t.exercicios.map(ex=>{const ce=ct.exercicios&&ct.exercicios[ex.id];return ce?{...ex,series:ce.series??ex.series,reps:ce.reps??ex.reps}:ex;})};});
+  const base = DT.map(t=>{
+    const ct=(S.customTreinos&&S.customTreinos[t.id])||{};
+    // fully overridden treino (created/edited via editor)
+    if(ct._full) return {...ct, id:t.id};
+    return{...t,label:ct.label||t.label,focus:ct.focus||t.focus,
+      exercicios:t.exercicios.map(ex=>{const ce=ct.exercicios&&ct.exercicios[ex.id];return ce?{...ex,series:ce.series??ex.series,reps:ce.reps??ex.reps}:ex;})};
+  });
+  // custom-added treinos (not in DT)
+  const extraIds = S.treinosList ? S.treinosList.filter(id=>!DT.find(t=>t.id===id)) : [];
+  const extras = extraIds.map(id=>(S.customTreinos&&S.customTreinos[id])).filter(Boolean);
+  // filter by treinosList order (deletions respected)
+  const list = S.treinosList || DT.map(t=>t.id);
+  const all = [...base, ...extras];
+  return list.map(id=>all.find(t=>t.id===id)).filter(Boolean);
+}
+
+// ── TREINO EDITOR ────────────────────────────────────────
+let editorTreinoId = null; // null = new treino
+let editorExList = [];     // [{id,nome,series,reps,musculo,passos}]
+
+function openEditor(id){
+  document.querySelectorAll('.tc-popup').forEach(p=>p.style.display='none');
+  editorTreinoId = id;
+  const t = id ? getTreinos().find(t=>t.id===id) : null;
+  document.getElementById('editor-title').textContent = t ? 'Editar treino' : 'Novo treino';
+  document.getElementById('editor-name').value = t ? t.label : '';
+  document.getElementById('editor-focus').value = t ? t.focus : '';
+  document.getElementById('editor-del-btn').style.display = t ? 'block' : 'none';
+  // build editorExList
+  editorExList = t ? t.exercicios.map(ex=>({...ex, passos:[...(ex.passos||[])]})) : [];
+  renderEditorExList();
+  document.getElementById('editor-back').onclick = ()=>{
+    showScreen('treinos-screen'); setHeader('Treinos','Selecione e comece');
+    document.querySelectorAll('#bottom-nav button').forEach(b=>b.classList.remove('active'));
+    document.getElementById('nav-treinos').classList.add('active');
+  };
+  showScreen('editor-screen');
+  setHeader(t?'Editar treino':'Novo treino', t?t.focus:'');
+  document.querySelectorAll('#bottom-nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('nav-treinos').classList.add('active');
+}
+
+function renderEditorExList(){
+  const wrap = document.getElementById('editor-ex-list');
+  wrap.innerHTML = editorExList.map((ex,i)=>`
+    <div class="ex-editor-card" id="exc-${i}" draggable="true"
+      ondragstart="edDragStart(event,${i})" ondragover="edDragOver(event,${i})" ondrop="edDrop(event,${i})">
+      <div class="ex-editor-top">
+        <span class="ex-editor-drag" title="Arrastar para reordenar">⠿</span>
+        <input class="ex-editor-name" value="${esc(ex.nome)}" placeholder="Nome do exercício"
+          oninput="editorExList[${i}].nome=this.value">
+        <button class="ex-editor-del" onclick="removeEditorEx(${i})" title="Remover">✕</button>
+      </div>
+      <div class="ex-editor-row">
+        <label>Músculo</label>
+        <input class="ex-editor-muscle" value="${esc(ex.musculo||'')}" placeholder="Ex: Peitoral"
+          oninput="editorExList[${i}].musculo=this.value">
+      </div>
+      <div class="ex-editor-row">
+        <label>Séries</label>
+        <input type="number" min="1" max="10" value="${ex.series||3}"
+          oninput="editorExList[${i}].series=parseInt(this.value)||3">
+        <label style="width:40px;padding-top:9px">Reps</label>
+        <input type="text" value="${esc(ex.reps||'12')}" placeholder="Ex: 10–12"
+          oninput="editorExList[${i}].reps=this.value">
+      </div>
+    </div>`).join('');
+}
+
+function esc(s){return String(s||'').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
+
+function addEditorEx(){
+  editorExList.push({id:'ex_'+Date.now()+'_'+Math.random().toString(36).slice(2),nome:'',musculo:'',series:3,reps:'12',passos:[]});
+  renderEditorExList();
+  // scroll to new card
+  const wrap=document.getElementById('editor-ex-list');
+  setTimeout(()=>wrap.lastElementChild&&wrap.lastElementChild.scrollIntoView({behavior:'smooth'}),50);
+}
+
+function removeEditorEx(i){
+  editorExList.splice(i,1);
+  renderEditorExList();
+}
+
+// drag-to-reorder
+let dragIdx=null;
+function edDragStart(e,i){dragIdx=i;e.dataTransfer.effectAllowed='move';}
+function edDragOver(e,i){e.preventDefault();e.dataTransfer.dropEffect='move';}
+function edDrop(e,i){
+  e.preventDefault();
+  if(dragIdx===null||dragIdx===i)return;
+  const item=editorExList.splice(dragIdx,1)[0];
+  editorExList.splice(i,0,item);
+  dragIdx=null; renderEditorExList();
+}
+
+function saveEditor(){
+  const name = document.getElementById('editor-name').value.trim();
+  const focus = document.getElementById('editor-focus').value.trim();
+  if(!name){showToast('Dê um nome ao treino');return;}
+  if(editorExList.length===0){showToast('Adicione pelo menos 1 exercício');return;}
+  // sync any direct input changes (in case oninput missed)
+  document.querySelectorAll('#editor-ex-list .ex-editor-card').forEach((card,i)=>{
+    const inputs=card.querySelectorAll('input');
+    editorExList[i].musculo=inputs[0].value;
+    editorExList[i].series=parseInt(inputs[1].value)||3;
+    editorExList[i].reps=inputs[2].value||'12';
+  });
+  const icon = name.trim().charAt(0).toUpperCase();
+  if(!S.customTreinos) S.customTreinos={};
+  let tid = editorTreinoId;
+  const isNew = !tid;
+  if(isNew){
+    tid = 'ct_'+Date.now();
+    if(!S.treinosList) S.treinosList = DT.map(t=>t.id);
+    S.treinosList.push(tid);
+  }
+  S.customTreinos[tid] = {
+    _full: true, id:tid, label:name, focus:focus||name,
+    icon: icon, exercicios: editorExList.map(ex=>({...ex}))
+  };
+  save();
+  renderTreinosTab();
+  showScreen('treinos-screen');
+  setHeader('Treinos','Selecione e comece');
+  document.querySelectorAll('#bottom-nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('nav-treinos').classList.add('active');
+  showToast(isNew?'Treino criado!':'Treino salvo!');
+}
+
+function deleteEditorTreino(){
+  if(!editorTreinoId) return;
+  const t=getTreinos().find(t=>t.id===editorTreinoId);
+  if(!confirm('Excluir "'+t.label+'"? Isso não pode ser desfeito.')) return;
+  deleteTreino(editorTreinoId);
+  showScreen('treinos-screen');
+  setHeader('Treinos','Selecione e comece');
+  document.querySelectorAll('#bottom-nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('nav-treinos').classList.add('active');
 }
 
 // ── NAV ──────────────────────────────────────────────────
