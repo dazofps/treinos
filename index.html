@@ -938,12 +938,12 @@ function renderWeekNav(){
   document.getElementById('week-label').textContent=weekOff===0?'Esta semana':weekOff===-1?'Semana passada':ws.getDate()+' '+MN[ws.getMonth()]+' – '+we.getDate()+' '+MN[we.getMonth()];
   document.getElementById('wn-next').className='wn-btn'+(weekOff>=0?' disabled':'');
   const today=new Date();today.setHours(0,0,0,0);
-  const wd=getWD(weekKey(weekOff));
+  const trainedDatesWN=weekLogDates(weekOff);
   let html='';
   for(let i=0;i<7;i++){
     const d=new Date(ws);d.setDate(ws.getDate()+i);
     const isT=d.getTime()===today.getTime();
-    const trained=!!(wd.daysTrained&&wd.daysTrained[i]);
+    const trained=trainedDatesWN.has(d.toISOString().slice(0,10));
     html+=`<div class="wday ${isT?'today':''} ${trained?'trained':''}" onclick="clickDay(${i})">
       <span class="wd-lbl">${DL[d.getDay()].slice(0,1)}</span>
       <span class="wd-num">${d.getDate()}</span>
@@ -959,8 +959,8 @@ function clickDay(i){
   const d=new Date(ws);d.setDate(ws.getDate()+i);
   const dateISO=d.toISOString().slice(0,10);
   const dateStr=d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
-  const trained=!!(wd.daysTrained&&wd.daysTrained[i]);
   const logs=S.workoutLog.filter(w=>w.dateISO===dateISO);
+  const trained=logs.length>0;
   let body='';
   if(logs.length>0){
     logs.forEach(log=>{
@@ -1042,8 +1042,7 @@ function saveManualLog(){
   S.workoutLog.push({treinoId:mlmTreinoId,label:t.label,focus:t.focus,date:dateFormatted,dateISO,dur,cal,exDone:{...mlmExDone},manual:true});
   S.workoutLog.sort((a,b)=>b.dateISO.localeCompare(a.dateISO));
   if(!wd.done)wd.done={};wd.done[mlmTreinoId]=true;
-  save();closeModal('manual-log-modal');renderWeekNav();renderHomeData();
-  showToast(t.label+' registrado! 💪');
+  save();closeModal('manual-log-modal');showToast(t.label+' registrado! 💪');showTab('home');
 }
 function setManualDayWithTreino(dayIdx, treinoId){
   const wd=getWD(weekKey(weekOff));
@@ -1071,9 +1070,18 @@ function setManualDayWithTreino(dayIdx, treinoId){
 }
 
 // ── HOME ─────────────────────────────────────────────────
+function weekLogDates(off){
+  const ws=weekStart(off);const wsDates=new Set();
+  for(let i=0;i<7;i++){const d=new Date(ws);d.setDate(ws.getDate()+i);wsDates.add(d.toISOString().slice(0,10));}
+  return new Set((S.workoutLog||[]).filter(w=>wsDates.has(w.dateISO)).map(w=>w.dateISO));
+}
+function weekLogCount(off){
+  const ws=weekStart(off);const wsDates=new Set();
+  for(let i=0;i<7;i++){const d=new Date(ws);d.setDate(ws.getDate()+i);wsDates.add(d.toISOString().slice(0,10));}
+  return (S.workoutLog||[]).filter(w=>wsDates.has(w.dateISO)).length;
+}
 function renderHomeMeta(){
-  const wd=getWD(weekKey(0));
-  const done=wd.done?Object.values(wd.done).filter(Boolean).length:0;
+  const done=weekLogCount(0);
   const goal=S.settings.weekGoal;
   // top compact meta card
   document.getElementById('rep-goal-num').textContent=done;
@@ -1081,11 +1089,12 @@ function renderHomeMeta(){
   // mini week dots
   const ws=weekStart(0);
   const today=new Date();today.setHours(0,0,0,0);
+  const trainedDates=weekLogDates(0);
   let html='';
   for(let i=0;i<7;i++){
     const d=new Date(ws);d.setDate(ws.getDate()+i);
     const isT=d.getTime()===today.getTime();
-    const trained=!!(wd.daysTrained&&wd.daysTrained[i]);
+    const trained=trainedDates.has(d.toISOString().slice(0,10));
     html+=`<div onclick="clickDay(${i})" style="border-radius:6px;border:0.5px solid ${isT?'var(--accent)':trained?'rgba(52,211,153,.3)':'var(--border)'};background:${trained?'rgba(52,211,153,.1)':'transparent'};display:flex;flex-direction:column;align-items:center;padding:6px 2px 5px;cursor:pointer">
       <span style="font-size:9px;color:${isT?'var(--accent)':'var(--muted)'};text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px">${DL[d.getDay()].slice(0,1)}</span>
       <span style="font-size:13px;font-weight:600;color:${trained?'var(--green)':isT?'var(--accent)':'var(--text)'}">${d.getDate()}</span>
@@ -1102,7 +1111,7 @@ function renderHomeMeta(){
 }
 
 function renderHomeData(){
-  renderHomeMeta();
+  renderHomeMeta();renderWeekNav();
   // summary cards
   const dates=new Set(S.workoutLog.map(w=>w.dateISO));
   let streak=0;const dd=new Date();
@@ -1320,7 +1329,7 @@ function finishWorkout(){
   if(!wd.done)wd.done={};wd.done[curTid]=true;
   if(!wd.daysTrained)wd.daysTrained={};wd.daysTrained[displayDayIdx(now)]=true;
   resetTreinoState();
-  save();closeModal('finish-modal');renderHomeData();showToast('Treino salvo! 💪');
+  save();closeModal('finish-modal');showToast('Treino salvo! 💪');showTab('home');
 }
 function skipFinish(){resetTreinoState();save();closeModal('finish-modal');}
 let runDayCtx=null;
@@ -1355,8 +1364,7 @@ function saveRun(){
   if(!wd.done)wd.done={};if(!wd.daysTrained)wd.daysTrained={};
   wd.done['run_'+dateISO]=true;wd.daysTrained[dayOfWeek]=true;
   runDayCtx=null;
-  save();closeModal('run-modal');renderHomeData();if(typeof renderTreinosTab==='function')renderTreinosTab();
-  showToast('Corrida registrada! 🏃');
+  save();closeModal('run-modal');showToast('Corrida registrada! 🏃');showTab('home');
 }
 let editLogIdx=-1;
 function openEditLog(idx){
@@ -1519,11 +1527,12 @@ function renderReportWeekNav(){
   const lbl=reportWeekOff===0?'Esta semana':reportWeekOff===-1?'Semana passada':ws.getDate()+' '+MN[ws.getMonth()]+' – '+we.getDate()+' '+MN[we.getMonth()];
   document.getElementById('report-week-label').textContent=lbl;
   document.getElementById('report-wn-next').className='wn-btn'+(reportWeekOff>=0?' disabled':'');
-  const today=new Date();today.setHours(0,0,0,0);const wd=getWD(weekKey(reportWeekOff));
+  const today=new Date();today.setHours(0,0,0,0);
+  const trainedDatesRep=weekLogDates(reportWeekOff);
   let html='';
   for(let i=0;i<7;i++){
     const d=new Date(ws);d.setDate(ws.getDate()+i);
-    const isT=d.getTime()===today.getTime();const trained=!!(wd.daysTrained&&wd.daysTrained[i]);
+    const isT=d.getTime()===today.getTime();const trained=trainedDatesRep.has(d.toISOString().slice(0,10));
     html+=`<div onclick="showReportDay(${i})" style="border-radius:6px;border:0.5px solid ${isT?'var(--accent)':trained?'rgba(52,211,153,.3)':'var(--border)'};background:${trained?'rgba(52,211,153,.1)':'transparent'};display:flex;flex-direction:column;align-items:center;padding:7px 2px 6px;cursor:pointer">
       <span style="font-size:9px;color:${isT?'var(--accent)':'var(--muted)'};text-transform:uppercase;margin-bottom:4px">${DL[d.getDay()].slice(0,1)}</span>
       <span style="font-size:14px;font-weight:600;color:${trained?'var(--green)':isT?'var(--accent)':'var(--text)'}">${d.getDate()}</span>
