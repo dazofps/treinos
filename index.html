@@ -600,6 +600,49 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
       </div>
     </div>
 
+
+    <!-- SAÚDE -->
+    <div id="saude-screen" class="screen">
+      <div class="saude-date-nav">
+        <div class="wn-btn" onclick="changeSaudeDate(-1)">‹</div>
+        <span id="saude-date-label"></span>
+        <div class="wn-btn" id="saude-date-next" onclick="changeSaudeDate(1)">›</div>
+      </div>
+      <div class="saude-grid">
+        <div class="saude-card">
+          <button class="sc-edit" onclick="editSaude('steps')">✏️</button>
+          <span class="sc-icon">👟</span>
+          <div class="sc-label">Passos</div>
+          <div class="sc-val" id="sd-steps">0</div>
+          <div class="sc-sub" id="sd-steps-meta">meta: 8.000</div>
+          <div class="saude-prog-wrap"><div class="saude-prog-fill" id="sd-steps-bar" style="background:var(--green);width:0%"></div></div>
+        </div>
+        <div class="saude-card">
+          <button class="sc-edit" onclick="editSaude('sleep')">✏️</button>
+          <span class="sc-icon">🌙</span>
+          <div class="sc-label">Sono</div>
+          <div class="sc-val" id="sd-sleep">–</div>
+          <div class="sc-sub" id="sd-sleep-meta">meta: 8h</div>
+          <div class="saude-prog-wrap"><div class="saude-prog-fill" id="sd-sleep-bar" style="background:var(--accent);width:0%"></div></div>
+        </div>
+        <div class="saude-card full">
+          <button class="sc-edit" onclick="editSaude('water')">✏️</button>
+          <span class="sc-icon">💧</span>
+          <div class="sc-label">Água</div>
+          <div style="display:flex;align-items:baseline;gap:6px">
+            <div class="sc-val" id="sd-water">0</div>
+            <span style="font-size:13px;color:var(--muted)" id="sd-water-meta">/ 2.000 ml</span>
+          </div>
+          <div class="saude-prog-wrap"><div class="saude-prog-fill" id="sd-water-bar" style="background:var(--blue);width:0%"></div></div>
+          <div class="water-btns">
+            <button class="water-btn water-minus" onclick="addWater(-250)">−250ml</button>
+            <button class="water-btn water-plus" onclick="addWater(250)">+250ml</button>
+          </div>
+        </div>
+      </div>
+      <p class="section-label" style="margin-top:4px">Histórico (7 dias)</p>
+      <div class="card"><div id="saude-hist-list"></div></div>
+    </div>
   </div>
 
   <!-- MODALS -->
@@ -652,82 +695,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
       <div id="day-modal-body"></div>
       <button class="modal-cancel" onclick="closeModal('day-modal')" style="margin-top:14px">Fechar</button>
     </div>
-
-  <!-- SAÚDE -->
-  <div id="saude-screen" class="screen">
-    <div class="saude-date-nav">
-      <div class="wn-btn" onclick="changeSaudeDate(-1)">‹</div>
-      <span id="saude-date-label"></span>
-      <div class="wn-btn" id="saude-date-next" onclick="changeSaudeDate(1)">›</div>
-    </div>
-
-    <div class="saude-grid">
-      <!-- STEPS -->
-      <div class="saude-card">
-        <button class="sc-edit" onclick="editSaude('steps')">✏️</button>
-        <span class="sc-icon">👟</span>
-        <div class="sc-label">Passos</div>
-        <div class="sc-val" id="sd-steps">0<span class="sc-unit"></span></div>
-        <div class="sc-sub" id="sd-steps-meta">meta: 8.000</div>
-        <div class="saude-prog-wrap"><div class="saude-prog-fill" id="sd-steps-bar" style="background:var(--green);width:0%"></div></div>
-      </div>
-
-      <!-- SLEEP -->
-      <div class="saude-card">
-        <button class="sc-edit" onclick="editSaude('sleep')">✏️</button>
-        <span class="sc-icon">🌙</span>
-        <div class="sc-label">Sono</div>
-        <div class="sc-val" id="sd-sleep">–<span class="sc-unit"></span></div>
-        <div class="sc-sub" id="sd-sleep-meta">meta: 8h</div>
-        <div class="saude-prog-wrap"><div class="saude-prog-fill" id="sd-sleep-bar" style="background:var(--accent);width:0%"></div></div>
-      </div>
-
-      <!-- WATER full width -->
-      <div class="saude-card full">
-        <button class="sc-edit" onclick="editSaude('water')">✏️</button>
-        <span class="sc-icon">💧</span>
-        <div class="sc-label">Água</div>
-        <div style="display:flex;align-items:baseline;gap:6px">
-          <div class="sc-val" id="sd-water">0</div>
-          <span style="font-size:13px;color:var(--muted)" id="sd-water-meta">/ 2.000 ml</span>
-        </div>
-        <div class="saude-prog-wrap"><div class="saude-prog-fill" id="sd-water-bar" style="background:var(--blue);width:0%"></div></div>
-        <div class="water-btns" id="water-quick-btns">
-          <button class="water-btn water-minus" onclick="addWater(-250)">−250ml</button>
-          <button class="water-btn water-plus" onclick="addWater(250)">+250ml</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- NUTRIÇÃO FATSECRET -->
-    <p class="section-label" style="margin-top:4px">Nutrição do dia</p>
-    <div class="fs-macro-row">
-      <div class="fs-macro cal"><div class="fm-val" id="fs-cal">0</div><div class="fm-lbl">kcal</div></div>
-      <div class="fs-macro prot"><div class="fm-val" id="fs-prot">0g</div><div class="fm-lbl">Proteína</div></div>
-      <div class="fs-macro carb"><div class="fm-val" id="fs-carb">0g</div><div class="fm-lbl">Carbs</div></div>
-      <div class="fs-macro fat"><div class="fm-val" id="fs-fat">0g</div><div class="fm-lbl">Gordura</div></div>
-    </div>
-    <!-- Search -->
-    <div class="fs-search-wrap">
-      <input class="fs-search-input" id="fs-search-input" placeholder="Buscar alimento..." onkeydown="if(event.key==='Enter')fsSearch()">
-      <button class="fs-search-btn" onclick="fsSearch()">🔍 Buscar</button>
-    </div>
-    <div id="fs-meal-select" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
-      <button class="meal-sel-btn" onclick="setFsMeal('cafe')" id="fsmeal-cafe">☕ Café da manhã</button>
-      <button class="meal-sel-btn" onclick="setFsMeal('almoco')" id="fsmeal-almoco">🍽 Almoço</button>
-      <button class="meal-sel-btn" onclick="setFsMeal('lanche')" id="fsmeal-lanche">🥪 Lanche</button>
-      <button class="meal-sel-btn" onclick="setFsMeal('jantar')" id="fsmeal-jantar">🌙 Jantar</button>
-    </div>
-    <div id="fs-results" class="fs-results"></div>
-    <!-- Meals logged -->
-    <div class="card" id="fs-meals-card">
-      <div id="fs-meals-list"><div style="font-size:13px;color:var(--muted)">Nenhum alimento registrado hoje.</div></div>
-    </div>
-
-    <p class="section-label" style="margin-top:12px">Histórico (7 dias)</p>
-    <div class="card"><div id="saude-hist-list"></div></div>
-  </div>
-
   </div>
 
   <div id="saude-modal" class="modal-overlay">
@@ -1572,13 +1539,7 @@ if(_dismissBtn)_dismissBtn.onclick=()=>{const b=document.getElementById('install
 if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
 
 // ── INIT ─────────────────────────────────────────────────
-(function(){
-  const n=S.profile.nome;
-  document.getElementById('screen-title').textContent=n?'Olá, '+n.split(' ')[0]:'Meu Treino';
-  document.getElementById('screen-sub').textContent='Bem-vindo';
-  document.getElementById('wakelock-toggle').checked=!!S.settings.wakeLock;
-  renderHomeData();
-})();
+showTab('home');
 </script>
 </body>
 </html>
