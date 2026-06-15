@@ -251,72 +251,26 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
 .dm-manual-btn.active{background:var(--accent2);border-color:var(--accent2);color:white}
 
 /* ── SAÚDE TAB ── */
-.saude-date-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:8px}
-.saude-date-nav .wn-btn{flex-shrink:0}
-#saude-date-label{font-size:13px;font-weight:500;color:var(--text);text-align:center;flex:1}
-.saude-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
-.saude-card{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);padding:16px;position:relative;overflow:hidden}
-.saude-card .sc-icon{font-size:24px;margin-bottom:8px;display:block}
-.saude-card .sc-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;font-weight:600;margin-bottom:4px}
-.saude-card .sc-val{font-size:28px;font-weight:800;letter-spacing:-1px;line-height:1}
-.saude-card .sc-unit{font-size:13px;font-weight:400;color:var(--muted);margin-left:2px}
-.saude-card .sc-sub{font-size:12px;color:var(--muted);margin-top:4px}
-.saude-card .sc-edit{position:absolute;top:10px;right:10px;background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:4px;opacity:.5}
-.saude-card .sc-edit:active{opacity:1}
 /* progress ring */
-.saude-ring-wrap{display:flex;align-items:center;gap:12px;margin-top:4px}
-.saude-ring-wrap svg{flex-shrink:0}
 /* sleep card full width */
-.saude-card.full{grid-column:span 2}
 /* progress bar */
-.saude-prog-wrap{background:var(--bg3);border-radius:3px;height:6px;margin-top:10px;overflow:hidden}
-.saude-prog-fill{height:100%;border-radius:3px;transition:width .4s ease}
 /* water buttons */
 .water-btn.water-minus{background:var(--bg3);border:0.5px solid var(--border2);color:var(--muted)}
 .water-btn.water-plus{background:rgba(96,165,250,.15);border:0.5px solid rgba(96,165,250,.3);color:var(--blue)}
 /* history card */
-.saude-hist-item{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:0.5px solid var(--border);font-size:13px}
-.saude-hist-item:last-child{border-bottom:none}
 /* ── FATSECRET / NUTRIÇÃO ── */
-.fs-macro-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}
-.fs-macro{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 8px;text-align:center}
 .fs-macro .fm-val{font-size:18px;font-weight:700;line-height:1}
 .fs-macro .fm-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:3px}
 .fs-macro.cal .fm-val{color:var(--red)}
 .fs-macro.prot .fm-val{color:var(--blue)}
 .fs-macro.carb .fm-val{color:var(--amber)}
 .fs-macro.fat .fm-val{color:var(--orange)}
-.fs-search-wrap{display:flex;gap:8px;margin-bottom:10px}
-.fs-search-input{flex:1;background:var(--bg2);border:0.5px solid var(--border2);border-radius:var(--radius-sm);padding:10px 13px;color:var(--text);font-size:14px;outline:none;-webkit-appearance:none}
 .fs-search-input:focus{border-color:var(--accent)}
-.fs-search-btn{background:var(--accent2);color:white;border:none;border-radius:var(--radius-sm);padding:10px 16px;font-size:14px;font-weight:600;cursor:pointer;flex-shrink:0;white-space:nowrap}
 .fs-search-btn:active{opacity:.85}
-.fs-results{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:10px;display:none}
-.fs-result-item{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-bottom:0.5px solid var(--border);cursor:pointer;gap:10px}
 .fs-result-item:last-child{border-bottom:none}
 .fs-result-item:active{background:var(--bg3)}
-.fs-result-name{font-size:13px;font-weight:500;flex:1;min-width:0}
-.fs-result-cal{font-size:12px;color:var(--red);flex-shrink:0}
-.fs-result-add{background:var(--accent2);color:white;border:none;border-radius:var(--radius-xs);padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0}
-.fs-meal-item{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:0.5px solid var(--border)}
 .fs-meal-item:last-child{border-bottom:none}
-.fs-meal-body{flex:1;min-width:0}
-.fs-meal-name{font-size:13px;font-weight:500}
-.fs-meal-macro{font-size:11px;color:var(--muted);margin-top:2px}
-.fs-meal-del{background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:4px;opacity:.5}
-.fs-meal-section{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin:12px 0 6px}
-.fs-loading{text-align:center;padding:16px;font-size:13px;color:var(--muted)}
-.meal-sel-btn{width:100%;padding:11px 8px;background:var(--bg2);border:0.5px solid var(--border2);border-radius:var(--radius-sm);color:var(--muted);font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;text-align:center}
-.meal-sel-btn:active{background:var(--bg3)}
-.meal-sel-btn.active{background:var(--accent2);border-color:var(--accent2);color:white}
-.water-btns{display:flex;gap:10px;margin-top:12px}
-.water-btn{flex:1;padding:11px;border-radius:var(--radius-sm);font-size:15px;font-weight:700;cursor:pointer;border:none;transition:all .15s}
-.water-minus{background:rgba(96,165,250,.1);color:var(--blue)}
-.water-plus{background:rgba(96,165,250,.2);color:var(--blue)}
 .water-btn:active{opacity:.75}
-.fs-search-btn{background:var(--accent2);color:white;border:none;border-radius:var(--radius-sm);padding:10px 14px;font-size:14px;font-weight:600;cursor:pointer;flex-shrink:0;white-space:nowrap}
-.fs-results{margin-bottom:12px}
-.fs-result-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius-sm);margin-bottom:6px;cursor:pointer;transition:background .15s}
 .fs-result-item:active{background:var(--bg3)}
 .tc-actions{display:flex;gap:6px;flex-shrink:0;align-items:center}
 .tc-act-btn{background:var(--bg3);border:0.5px solid var(--border2);border-radius:var(--radius-xs);padding:6px 9px;color:var(--muted);font-size:14px;cursor:pointer;line-height:1}
@@ -603,49 +557,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
 
 
     <!-- SAÚDE -->
-    <div id="saude-screen" class="screen">
-      <div class="saude-date-nav">
-        <div class="wn-btn" onclick="changeSaudeDate(-1)">‹</div>
-        <span id="saude-date-label"></span>
-        <div class="wn-btn" id="saude-date-next" onclick="changeSaudeDate(1)">›</div>
-      </div>
-      <div class="saude-grid">
-        <div class="saude-card">
-          <button class="sc-edit" onclick="editSaude('steps')">✏️</button>
-          <span class="sc-icon">👟</span>
-          <div class="sc-label">Passos</div>
-          <div class="sc-val" id="sd-steps">0</div>
-          <div class="sc-sub" id="sd-steps-meta">meta: 8.000</div>
-          <div class="saude-prog-wrap"><div class="saude-prog-fill" id="sd-steps-bar" style="background:var(--green);width:0%"></div></div>
-        </div>
-        <div class="saude-card">
-          <button class="sc-edit" onclick="editSaude('sleep')">✏️</button>
-          <span class="sc-icon">🌙</span>
-          <div class="sc-label">Sono</div>
-          <div class="sc-val" id="sd-sleep">–</div>
-          <div class="sc-sub" id="sd-sleep-times" style="color:var(--accent);font-size:11px;margin-top:2px"></div>
-          <div class="sc-sub" id="sd-sleep-meta">meta: 8h</div>
-          <div class="saude-prog-wrap"><div class="saude-prog-fill" id="sd-sleep-bar" style="background:var(--accent);width:0%"></div></div>
-        </div>
-        <div class="saude-card full">
-          <button class="sc-edit" onclick="editSaude('water')">✏️</button>
-          <span class="sc-icon">💧</span>
-          <div class="sc-label">Água</div>
-          <div style="display:flex;align-items:baseline;gap:6px">
-            <div class="sc-val" id="sd-water">0</div>
-            <span style="font-size:13px;color:var(--muted)" id="sd-water-meta">/ 2.000 ml</span>
-          </div>
-          <div class="saude-prog-wrap"><div class="saude-prog-fill" id="sd-water-bar" style="background:var(--blue);width:0%"></div></div>
-          <div class="water-btns">
-            <button class="water-btn water-minus" onclick="addWater(-250)">−250ml</button>
-            <button class="water-btn water-plus" onclick="addWater(250)">+250ml</button>
-          </div>
-        </div>
-      </div>
-      <p class="section-label" style="margin-top:4px">Histórico (7 dias)</p>
-      <div class="card"><div id="saude-hist-list"></div></div>
-    </div>
-  </div>
 
   <!-- MODALS -->
 
@@ -699,41 +610,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
     </div>
   </div>
 
-  <!-- SLEEP MODAL -->
-  <div id="sleep-modal" class="modal-overlay">
-    <div class="modal-sheet">
-      <h3>🌙 Registrar Sono</h3>
-      <div class="ms-sub" id="sleep-modal-date" style="margin-bottom:16px"></div>
-      <div class="modal-row">
-        <label>Hora que foi dormir</label>
-        <input class="modal-input" type="time" id="sleep-bedtime" value="22:30" oninput="updateSleepPreview()">
-      </div>
-      <div class="modal-row">
-        <label>Hora que acordou</label>
-        <input class="modal-input" type="time" id="sleep-waketime" value="06:30" oninput="updateSleepPreview()">
-      </div>
-      <div id="sleep-duration-preview" style="text-align:center;font-size:22px;font-weight:700;color:var(--accent);margin:14px 0 4px;letter-spacing:-0.5px"></div>
-      <button class="modal-save" onclick="saveSleepModal()">Salvar</button>
-      <button class="modal-cancel" onclick="closeModal('sleep-modal')">Cancelar</button>
-    </div>
-  </div>
-  <div id="saude-modal" class="modal-overlay">
-    <div class="modal-sheet">
-      <h3 id="saude-modal-title">Registrar</h3>
-      <div class="modal-row" style="margin-top:16px">
-        <label id="saude-modal-label">Valor</label>
-        <input class="modal-input" type="number" id="saude-modal-input" min="0">
-      </div>
-      <div id="saude-modal-extra" style="display:none">
-        <div class="modal-row">
-          <label>Até (hora)</label>
-          <input class="modal-input" type="number" id="saude-modal-end" min="0" max="23" placeholder="Ex: 7">
-        </div>
-      </div>
-      <button class="modal-save" onclick="saveSaudeModal()">Salvar</button>
-      <button class="modal-cancel" onclick="closeModal('saude-modal')">Cancelar</button>
-    </div>
-  </div>
   <!-- MANUAL LOG MODAL -->
   <div id="manual-log-modal" class="modal-overlay">
     <div class="modal-sheet">
@@ -865,14 +741,13 @@ const TIPS=['Foque na execução antes de aumentar o peso.','Progrida aos poucos
 
 // ── STATE ────────────────────────────────────────────────
 let S=JSON.parse(localStorage.getItem('treino_v5')||'{}');
-const DEF={weekData:{},workoutLog:[],weightLog:[],saudeLog:{},
+const DEF={weekData:{},workoutLog:[],weightLog:[],
   settings:{restSecs:90,wakeLock:false,weekGoal:4},
   profile:{nome:'',sexo:'',idade:'',altura:'',pesoInicial:'',pesoMeta:''},
   customTreinos:null};
 Object.keys(DEF).forEach(k=>{if(S[k]===undefined)S[k]=JSON.parse(JSON.stringify(DEF[k]));});
 if(!S.profile)S.profile={...DEF.profile};
 ['restSecs','wakeLock','weekGoal'].forEach(k=>{if(S.settings[k]===undefined)S.settings[k]=DEF.settings[k];});
-if(!S.saudeLog) S.saudeLog={};
 function save(){localStorage.setItem('treino_v5',JSON.stringify(S));}
 
 function weekKey(off){
@@ -1480,8 +1355,6 @@ function showTab(tab){
     showScreen('treinos-screen');setHeader('Treinos','Selecione e comece');renderTreinosTab();
   } else if(tab==='report'){
     showScreen('report-screen');setHeader('Relatório','Seu progresso');reportWeekOff=0;renderReport();
-  } else if(tab==='saude'){
-    showScreen('saude-screen');setHeader('Saúde','Bem-estar diário');saudeOff=0;renderSaude();
   } else if(tab==='settings'){
     showScreen('settings-screen');setHeader('Configurações','Personalizar');
     document.getElementById('wakelock-toggle').checked=!!S.settings.wakeLock;
@@ -1669,173 +1542,6 @@ function saveExEdit(){
   if(!S.customTreinos[editTid].exercicios)S.customTreinos[editTid].exercicios={};
   t.exercicios.forEach(ex=>{const es=document.getElementById('es-'+ex.id);const er=document.getElementById('er-'+ex.id);if(es&&er)S.customTreinos[editTid].exercicios[ex.id]={series:parseInt(es.value)||ex.series,reps:er.value||ex.reps};});
   save();document.getElementById('sub-settings').style.display='none';showToast('Alterações salvas!');
-}
-
-// ── SAÚDE ─────────────────────────────────────────────────
-let saudeOff=0,saudeModalType='',fsMeal='cafe';
-const FOODS=[
-  {n:'Arroz branco cozido',kcal:130,prot:2.5,carb:28,fat:0.2},
-  {n:'Feijão preto cozido',kcal:77,prot:4.5,carb:14,fat:0.5},
-  {n:'Frango grelhado (peito)',kcal:165,prot:31,carb:0,fat:3.6},
-  {n:'Ovo cozido',kcal:155,prot:13,carb:1.1,fat:11},
-  {n:'Banana prata',kcal:98,prot:1.3,carb:23,fat:0.1},
-  {n:'Pão francês',kcal:300,prot:9,carb:58,fat:3},
-  {n:'Leite integral',kcal:61,prot:3.2,carb:4.7,fat:3.3},
-  {n:'Iogurte natural',kcal:59,prot:3.5,carb:4.7,fat:3.3},
-  {n:'Whey protein (dose)',kcal:120,prot:24,carb:3,fat:2},
-  {n:'Aveia em flocos',kcal:394,prot:14,carb:67,fat:8.5},
-  {n:'Batata doce cozida',kcal:86,prot:1.6,carb:20,fat:0.1},
-  {n:'Carne bovina moída',kcal:215,prot:20,carb:0,fat:14},
-  {n:'Atum em lata',kcal:128,prot:29,carb:0,fat:1},
-  {n:'Queijo minas',kcal:264,prot:17,carb:3,fat:21},
-  {n:'Maçã',kcal:52,prot:0.3,carb:14,fat:0.2},
-  {n:'Laranja',kcal:47,prot:0.9,carb:11,fat:0.1},
-  {n:'Café preto',kcal:2,prot:0.3,carb:0,fat:0},
-  {n:'Tapioca',kcal:340,prot:0.6,carb:84,fat:0.2},
-  {n:'Salada mista',kcal:20,prot:1.5,carb:3,fat:0.3},
-  {n:'Azeite de oliva',kcal:884,prot:0,carb:0,fat:100},
-  {n:'Pão integral',kcal:247,prot:8,carb:46,fat:3.4},
-  {n:'Salmão grelhado',kcal:208,prot:20,carb:0,fat:13},
-  {n:'Queijo cottage',kcal:98,prot:11,carb:3.4,fat:4.3},
-  {n:'Castanha do Pará',kcal:656,prot:14,carb:12,fat:66},
-  {n:'Amendoim torrado',kcal:567,prot:26,carb:16,fat:49},
-  {n:'Macarrão cozido',kcal:158,prot:5.8,carb:31,fat:0.9},
-  {n:'Pão de queijo',kcal:270,prot:4,carb:42,fat:9},
-  {n:'Chocolate ao leite',kcal:535,prot:7.6,carb:59,fat:30},
-  {n:'Suco de laranja natural',kcal:45,prot:0.7,carb:10,fat:0.2},
-];
-let fsSearchResults=[];
-function getSaudeData(dateISO){if(!S.saudeLog[dateISO])S.saudeLog[dateISO]={steps:0,sleep:null,water:0,meals:[]};return S.saudeLog[dateISO];}
-function saudeDateKey(off){const d=new Date();d.setDate(d.getDate()+off);return d.toISOString().slice(0,10);}
-function renderSaude(){
-  const dateISO=saudeDateKey(saudeOff);const d=new Date(dateISO);
-  const label=saudeOff===0?'Hoje':saudeOff===-1?'Ontem':d.toLocaleDateString('pt-BR',{weekday:'short',day:'numeric',month:'short'});
-  document.getElementById('saude-date-label').textContent=label;
-  document.getElementById('saude-date-next').className='wn-btn'+(saudeOff>=0?' disabled':'');
-  const sd=getSaudeData(dateISO);
-  const stepsGoal=S.settings.stepsGoal||8000;
-  document.getElementById('sd-steps').innerHTML=sd.steps.toLocaleString('pt-BR');
-  document.getElementById('sd-steps-meta').textContent='meta: '+stepsGoal.toLocaleString('pt-BR');
-  document.getElementById('sd-steps-bar').style.width=Math.min(100,sd.steps/stepsGoal*100)+'%';
-  const sleepGoal=S.settings.sleepGoal||8;const sleepH=sd.sleep?sd.sleep.hours:null;
-  const sleepMins=sleepH?Math.round(sleepH*60):null;
-  const sleepLabel=sleepMins?(Math.floor(sleepMins/60)+'h'+(sleepMins%60?' '+sleepMins%60+'m':'')):'–';
-  document.getElementById('sd-sleep').innerHTML=sleepLabel;
-  const timesEl=document.getElementById('sd-sleep-times');
-  if(timesEl)timesEl.textContent=sd.sleep&&sd.sleep.bedtime?sd.sleep.bedtime+' → '+sd.sleep.waketime:'';
-  document.getElementById('sd-sleep-meta').textContent='meta: '+sleepGoal+'h';
-  document.getElementById('sd-sleep-bar').style.width=sleepH?Math.min(100,sleepH/sleepGoal*100)+'%':'0%';
-  const waterGoal=S.settings.waterGoal||2000;
-  document.getElementById('sd-water').textContent=sd.water.toLocaleString('pt-BR');
-  document.getElementById('sd-water-meta').textContent='/ '+waterGoal.toLocaleString('pt-BR')+' ml';
-  document.getElementById('sd-water-bar').style.width=Math.min(100,sd.water/waterGoal*100)+'%';
-  const tot=(sd.meals||[]).reduce((a,m)=>({kcal:a.kcal+(m.kcal||0),prot:a.prot+(m.prot||0),carb:a.carb+(m.carb||0),fat:a.fat+(m.fat||0)}),{kcal:0,prot:0,carb:0,fat:0});
-  document.getElementById('fs-cal').textContent=Math.round(tot.kcal);
-  document.getElementById('fs-prot').textContent=Math.round(tot.prot)+'g';
-  document.getElementById('fs-carb').textContent=Math.round(tot.carb)+'g';
-  document.getElementById('fs-fat').textContent=Math.round(tot.fat)+'g';
-  renderFsMeals(sd,dateISO);renderSaudeHist();setFsMeal(fsMeal);
-}
-function changeSaudeDate(dir){if(saudeOff+dir>0)return;saudeOff+=dir;document.getElementById('fs-results').innerHTML='';renderSaude();}
-function calcSleepHours(bed,wake){
-  // bed and wake are "HH:MM" strings; wake can be next day
-  const [bh,bm]=bed.split(':').map(Number);
-  const [wh,wm]=wake.split(':').map(Number);
-  let mins=(wh*60+wm)-(bh*60+bm);
-  if(mins<=0)mins+=24*60; // crossed midnight
-  return mins;
-}
-function updateSleepPreview(){
-  const bed=document.getElementById('sleep-bedtime').value;
-  const wake=document.getElementById('sleep-waketime').value;
-  if(!bed||!wake){document.getElementById('sleep-duration-preview').textContent='';return;}
-  const mins=calcSleepHours(bed,wake);
-  const h=Math.floor(mins/60),m=mins%60;
-  document.getElementById('sleep-duration-preview').textContent=(h?h+'h ':'')+(m?m+'min':'');
-}
-function openSleepModal(){
-  const sd=getSaudeData(saudeDateKey(saudeOff));
-  const d=new Date(saudeDateKey(saudeOff)+'T12:00:00');
-  document.getElementById('sleep-modal-date').textContent=
-    saudeOff===0?'Hoje':saudeOff===-1?'Ontem':d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
-  document.getElementById('sleep-bedtime').value=sd.sleep&&sd.sleep.bedtime?sd.sleep.bedtime:'22:30';
-  document.getElementById('sleep-waketime').value=sd.sleep&&sd.sleep.waketime?sd.sleep.waketime:'06:30';
-  updateSleepPreview();
-  document.getElementById('sleep-modal').classList.add('open');
-}
-function saveSleepModal(){
-  const bed=document.getElementById('sleep-bedtime').value;
-  const wake=document.getElementById('sleep-waketime').value;
-  if(!bed||!wake){showToast('Preencha os dois horários');return;}
-  const mins=calcSleepHours(bed,wake);
-  const hours=parseFloat((mins/60).toFixed(1));
-  const sd=getSaudeData(saudeDateKey(saudeOff));
-  sd.sleep={bedtime:bed,waketime:wake,hours};
-  save();closeModal('sleep-modal');renderSaude();showToast('Sono registrado!');
-}
-function editSaude(type){
-  saudeModalType=type;const sd=getSaudeData(saudeDateKey(saudeOff));
-  const title=document.getElementById('saude-modal-title');const label=document.getElementById('saude-modal-label');const input=document.getElementById('saude-modal-input');
-  document.getElementById('saude-modal-extra').style.display='none';
-  if(type==='steps'){title.textContent='Registrar passos';label.textContent='Passos';input.value=sd.steps||'';input.min=0;input.max=100000;input.step=100;}
-  else if(type==='sleep'){openSleepModal();return;}
-  else if(type==='water'){title.textContent='Registrar água';label.textContent='Quantidade (ml)';input.value=sd.water||'';input.min=0;input.max=10000;input.step=250;}
-  document.getElementById('saude-modal').classList.add('open');setTimeout(()=>input.focus(),150);
-}
-function saveSaudeModal(){
-  const sd=getSaudeData(saudeDateKey(saudeOff));const val=parseFloat(document.getElementById('saude-modal-input').value)||0;
-  if(saudeModalType==='steps')sd.steps=Math.round(val);
-  else if(saudeModalType==='sleep')sd.sleep={hours:val};
-  else if(saudeModalType==='water')sd.water=Math.round(val);
-  save();closeModal('saude-modal');renderSaude();showToast('Salvo!');
-}
-function addWater(amount){
-  const sd=getSaudeData(saudeDateKey(saudeOff));sd.water=Math.max(0,sd.water+amount);save();
-  const waterGoal=S.settings.waterGoal||2000;
-  document.getElementById('sd-water').textContent=sd.water.toLocaleString('pt-BR');
-  document.getElementById('sd-water-bar').style.width=Math.min(100,sd.water/waterGoal*100)+'%';
-  showToast(amount>0?'+'+amount+'ml':''+amount+'ml');
-}
-function setFsMeal(meal){fsMeal=meal;['cafe','almoco','lanche','jantar'].forEach(m=>{const b=document.getElementById('fsmeal-'+m);if(b)b.className='meal-sel-btn'+(m===meal?' active':'');});}
-function fsSearch(){
-  const q=document.getElementById('fs-search-input').value.trim().toLowerCase();
-  if(!q){document.getElementById('fs-results').innerHTML='';return;}
-  fsSearchResults=FOODS.filter(f=>f.n.toLowerCase().includes(q));
-  if(!fsSearchResults.length){document.getElementById('fs-results').innerHTML='<div style="font-size:13px;color:var(--muted);padding:8px 0">Nenhum alimento encontrado.</div>';return;}
-  document.getElementById('fs-results').innerHTML=fsSearchResults.map((f,i)=>
-    `<div class="fs-result-item" onclick="addFoodEntry(${i})"><div style="flex:1"><div style="font-size:14px;font-weight:500">${f.n}</div><div style="font-size:12px;color:var(--muted)">${f.kcal}kcal · ${f.prot}g P · ${f.carb}g C · ${f.fat}g G (100g)</div></div><span style="color:var(--accent);font-size:22px;line-height:1;flex-shrink:0">+</span></div>`
-  ).join('');
-}
-function addFoodEntry(i){
-  const f=fsSearchResults[i];const sd=getSaudeData(saudeDateKey(saudeOff));
-  sd.meals.push({name:f.n+' (100g)',meal:fsMeal,kcal:f.kcal,prot:f.prot,carb:f.carb,fat:f.fat});
-  save();document.getElementById('fs-search-input').value='';document.getElementById('fs-results').innerHTML='';
-  renderSaude();showToast(f.n+' adicionado!');
-}
-function renderFsMeals(sd,dateISO){
-  const names={cafe:'☕ Café',almoco:'🍽 Almoço',lanche:'🥪 Lanche',jantar:'🌙 Jantar'};
-  const byMeal={cafe:[],almoco:[],lanche:[],jantar:[]};
-  (sd.meals||[]).forEach((m,i)=>{if(byMeal[m.meal])byMeal[m.meal].push({...m,idx:i});});
-  let html='';
-  ['cafe','almoco','lanche','jantar'].forEach(k=>{
-    const items=byMeal[k];if(!items.length)return;
-    html+=`<div style="margin-bottom:10px"><div style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">${names[k]}</div>`;
-    html+=items.map(m=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:0.5px solid var(--border)"><div><div style="font-size:13px">${m.name}</div><div style="font-size:12px;color:var(--muted)">${Math.round(m.kcal)}kcal · ${Math.round(m.prot)}g P</div></div><button onclick="removeFoodEntry('${dateISO}',${m.idx})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:4px;line-height:1">✕</button></div>`).join('');
-    html+='</div>';
-  });
-  document.getElementById('fs-meals-list').innerHTML=html||'<div style="font-size:13px;color:var(--muted)">Nenhum alimento registrado hoje.</div>';
-}
-function removeFoodEntry(dateISO,idx){const sd=getSaudeData(dateISO);sd.meals.splice(idx,1);save();renderSaude();}
-function renderSaudeHist(){
-  let html='';
-  for(let i=6;i>=0;i--){
-    const dateISO=saudeDateKey(-i);const d=new Date(dateISO);const sd=S.saudeLog[dateISO];
-    if(!sd||(!sd.steps&&!sd.water&&!sd.sleep&&(!sd.meals||!sd.meals.length)))continue;
-    const lbl=i===0?'Hoje':i===1?'Ontem':d.toLocaleDateString('pt-BR',{weekday:'short',day:'numeric'});
-    const sleepTxt=sd.sleep?(sd.sleep.bedtime?'🌙'+sd.sleep.bedtime+'→'+sd.sleep.waketime:sd.sleep.hours?'🌙'+sd.sleep.hours+'h':''):'';
-    html+=`<div class="saude-hist-item"><span style="font-weight:500">${lbl}</span><span style="color:var(--muted);font-size:12px">${sd.steps?'👟'+sd.steps.toLocaleString('pt-BR')+' ':''}${sd.water?'💧'+sd.water+'ml ':''} ${sleepTxt}</span></div>`;
-  }
-  document.getElementById('saude-hist-list').innerHTML=html||'<div style="font-size:13px;color:var(--muted)">Nenhum registro nos últimos 7 dias.</div>';
 }
 
 // ── PWA ──────────────────────────────────────────────────
