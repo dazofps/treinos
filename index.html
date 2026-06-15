@@ -1385,13 +1385,15 @@ function renderReport(){
     const dH=diff===null?'':`<span class="wh-diff ${diff>0?'up':diff<0?'down':'same'}">${diff>0?'+':''}${diff} kg</span>`;
     return `<div class="weight-hist-row"><div><div class="wh-val">${w.val} kg</div><div class="wh-date">${w.date}</div></div>${dH}</div>`;
   }).join(''):'<div style="font-size:13px;color:var(--muted);padding:4px 0">Nenhum registro ainda.</div>';
-  const wlog=S.workoutLog||[];
-  document.getElementById('wlog-list').innerHTML=wlog.length?wlog.slice(0,10).map((w,i)=>`
+  const wsR=weekStart(reportWeekOff);const wsDatesR=new Set();
+  for(let i=0;i<7;i++){const d=new Date(wsR);d.setDate(wsR.getDate()+i);wsDatesR.add(d.toISOString().slice(0,10));}
+  const wlog=(S.workoutLog||[]).filter(w=>wsDatesR.has(w.dateISO));
+  document.getElementById('wlog-list').innerHTML=wlog.length?wlog.map((w)=>{const ri=(S.workoutLog||[]).indexOf(w);return `
     <div class="wlog-item"><div><div class="wl-name">${w.label}</div><div class="wl-meta">${w.focus} · ${w.date}${w.dur?' · '+w.dur+'min':''}${w.cal?' · '+w.cal+' kcal':''}</div></div>
       <div style="display:flex;align-items:center;gap:4px">
-        <button onclick="openEditLog(${i})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:15px;padding:2px 5px;line-height:1" title="Editar">✏️</button>
-        <button onclick="deleteWorkoutLog(${i})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:2px 4px;line-height:1">✕</button>
-      </div></div>`).join(''):'<div style="font-size:13px;color:var(--muted);padding:4px 0">Nenhum treino registrado ainda.</div>';
+        <button onclick="openEditLog(${ri})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:15px;padding:2px 5px;line-height:1" title="Editar">✏️</button>
+        <button onclick="deleteWorkoutLog(${ri})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:2px 4px;line-height:1">✕</button>
+      </div></div>`;}).join(''):'<div style="font-size:13px;color:var(--muted);padding:4px 0">Nenhum treino nesta semana.</div>';
   renderBMI();
 }
 function changeReportWeek(dir){if(reportWeekOff+dir>0)return;reportWeekOff+=dir;document.getElementById('report-day-detail').style.display='none';renderReportWeekNav();}
@@ -1556,7 +1558,7 @@ const _dismissBtn=document.getElementById('dismiss-install');
 if(_dismissBtn)_dismissBtn.onclick=()=>{const b=document.getElementById('install-banner');if(b)b.style.display='none';};
 if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
 
-// ── INIT ──────────────────────────────────────────────────
+// ── INIT ────────────────────────
 showTab('home');
 </script>
 </body>
