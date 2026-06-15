@@ -1396,7 +1396,7 @@ function renderReport(){
       </div></div>`;}).join(''):'<div style="font-size:13px;color:var(--muted);padding:4px 0">Nenhum treino nesta semana.</div>';
   renderBMI();
 }
-function changeReportWeek(dir){if(reportWeekOff+dir>0)return;reportWeekOff+=dir;document.getElementById('report-day-detail').style.display='none';renderReportWeekNav();}
+function changeReportWeek(dir){if(reportWeekOff+dir>0)return;reportWeekOff+=dir;document.getElementById('report-day-detail').style.display='none';renderReport();}
 function renderReportWeekNav(){
   const ws=weekStart(reportWeekOff),we=new Date(ws);we.setDate(we.getDate()+6);
   const lbl=reportWeekOff===0?'Esta semana':reportWeekOff===-1?'Semana passada':ws.getDate()+' '+MN[ws.getMonth()]+' – '+we.getDate()+' '+MN[we.getMonth()];
