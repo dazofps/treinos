@@ -355,19 +355,19 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
           </div>
         </div>
         <div class="sum-card green">
-          <div class="sc-label">Total treinos</div>
+          <div class="sc-label">Treinos</div>
           <div class="sc-val" id="rep-total">0</div>
-          <div class="sc-sub">desde o início</div>
+          <div class="sc-sub">esta semana</div>
         </div>
         <div class="sum-card amber">
-          <div class="sc-label">Tempo total</div>
+          <div class="sc-label">Tempo</div>
           <div class="sc-val" id="rep-time">0m</div>
-          <div class="sc-sub" id="rep-time-sub">de treino</div>
+          <div class="sc-sub" id="rep-time-sub">esta semana</div>
         </div>
         <div class="sum-card" style="grid-column:span 2">
-          <div class="sc-label">Calorias queimadas</div>
+          <div class="sc-label">Calorias</div>
           <div class="sc-val" id="rep-cal" style="color:var(--red)">0</div>
-          <div class="sc-sub">kcal no total</div>
+          <div class="sc-sub">kcal esta semana</div>
         </div>
       </div>
       <p class="section-label">Dica do dia</p>
@@ -984,19 +984,22 @@ function renderHomeMeta(){
 
 function renderHomeData(){
   renderHomeMeta();
-  // summary cards
+  // streak usa todo o histórico
   const dates=new Set(S.workoutLog.map(w=>w.dateISO));
   let streak=0;const dd=new Date();
-  // If no workout today yet, start counting from yesterday so streak doesn't reset mid-day
   if(!dates.has(dd.toISOString().slice(0,10)))dd.setDate(dd.getDate()-1);
   while(true){const k=dd.toISOString().slice(0,10);if(dates.has(k)){streak++;dd.setDate(dd.getDate()-1);}else break;}
   document.getElementById('rep-streak').textContent=streak;
-  document.getElementById('rep-total').textContent=S.workoutLog.length;
-  const totalMins=S.workoutLog.reduce((a,w)=>a+(w.dur||0),0);
+  // totais apenas da semana atual
+  const ws=weekStart(0);const wsDates=new Set();
+  for(let i=0;i<7;i++){const d=new Date(ws);d.setDate(ws.getDate()+i);wsDates.add(d.toISOString().slice(0,10));}
+  const weekLogs=(S.workoutLog||[]).filter(w=>wsDates.has(w.dateISO));
+  document.getElementById('rep-total').textContent=weekLogs.length;
+  const totalMins=weekLogs.reduce((a,w)=>a+(w.dur||0),0);
   const hrs=Math.floor(totalMins/60),mins=totalMins%60;
   document.getElementById('rep-time').textContent=hrs>0?hrs+'h'+(mins?' '+mins+'m':''):totalMins+'m';
   document.getElementById('rep-time-sub').textContent='≈ '+totalMins+' min';
-  const totalCal=S.workoutLog.reduce((a,w)=>a+(w.cal||0),0);
+  const totalCal=weekLogs.reduce((a,w)=>a+(w.cal||0),0);
   const calEl=document.getElementById('rep-cal');if(calEl)calEl.textContent=totalCal;
   document.getElementById('tip-card').textContent=TIPS[new Date().getDate()%TIPS.length];
 }
@@ -1553,7 +1556,7 @@ const _dismissBtn=document.getElementById('dismiss-install');
 if(_dismissBtn)_dismissBtn.onclick=()=>{const b=document.getElementById('install-banner');if(b)b.style.display='none';};
 if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
 
-// ── INIT ─────────────────────────────────────────────────
+// ── INIT ──────────────────────────────────────────────────
 showTab('home');
 </script>
 </body>
