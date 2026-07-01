@@ -1191,6 +1191,18 @@ document.getElementById('mark-done-btn').onclick=function(){
 };
 
 // ── FINISH ───────────────────────────────────────────────
+function encerrarTreino(){
+  // Abre o modal de conclusão mesmo sem ter feito todos os exercícios
+  document.getElementById('finish-dur').value='';
+  document.getElementById('finish-cal').value='';
+  if(curTid){
+    const wd=getWD(weekKey(0));
+    if(!wd.done)wd.done={};wd.done[curTid]=true;
+    if(!wd.daysTrained)wd.daysTrained={};wd.daysTrained[displayDayIdx(new Date())]=true;
+    save();
+  }
+  document.getElementById('finish-modal').classList.add('open');
+}
 function finishWorkout(){
   const dur=parseInt(document.getElementById('finish-dur').value)||0;
   const cal=parseInt(document.getElementById('finish-cal').value)||0;
@@ -1328,7 +1340,88 @@ function deleteWorkoutLog(i){
 
 function resetTreinoState(){curTid=null;}
 function wtAdjust(m){}
-function openEditor(id){showTab('settings');setTimeout(()=>{openSetting('exedit');setTimeout(()=>setEditTreino(id),50);},50);}
+let editorTid=null,editorExList=[];
+function openEditor(id){
+  editorTid=id||null;
+  const t=id?getTreinos().find(t=>t.id===id):null;
+  document.getElementById('editor-title').textContent=id?'Editar treino':'Novo treino';
+  document.getElementById('editor-name').value=t?t.label:'';
+  document.getElementById('editor-focus').value=t?t.focus:'';
+  editorExList=t?t.exercicios.map(ex=>({...ex})):[];
+  document.getElementById('editor-del-btn').style.display=id?'block':'none';
+  renderEditorExList();
+  document.getElementById('editor-back').onclick=()=>{
+    showScreen('treinos-screen');setHeader('Treinos','Selecione e comece');
+    document.querySelectorAll('#bottom-nav button').forEach(b=>b.classList.remove('active'));
+    document.getElementById('nav-treinos').classList.add('active');
+    renderTreinosTab();
+  };
+  showScreen('editor-screen');setHeader(t?t.label:'Novo treino','Editar');
+  document.querySelectorAll('#bottom-nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('nav-treinos').classList.add('active');
+}
+function renderEditorExList(){
+  document.getElementById('editor-ex-list').innerHTML=editorExList.map((ex,i)=>`
+    <div class="ex-edit-card">
+      <div class="edit-row"><label>Nome</label><input class="edit-input" id="een-${i}" value="${ex.nome}" placeholder="Ex: Supino"></div>
+      <div class="edit-row"><label>Séries</label><input class="edit-input" type="number" id="ees-${i}" value="${ex.series}" min="1" max="10"></div>
+      <div class="edit-row"><label>Reps</label><input class="edit-input" id="eer-${i}" value="${ex.reps}" placeholder="Ex: 12"></div>
+      <div class="edit-row"><label>Músculo</label><input class="edit-input" id="eem-${i}" value="${ex.musculo||''}" placeholder="Ex: Peitoral"></div>
+      <button onclick="removeEditorEx(${i})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:13px;padding:4px 0;margin-top:4px">✕ Remover exercício</button>
+    </div>`).join('');
+}
+function addEditorEx(){
+  editorExList.push({id:'ex_'+Date.now(),nome:'',series:3,reps:'12',musculo:'',passos:[]});
+  renderEditorExList();
+  document.getElementById('editor-ex-list').lastElementChild?.scrollIntoView({behavior:'smooth'});
+}
+function removeEditorEx(i){
+  editorExList.splice(i,1);renderEditorExList();
+}
+function saveEditor(){
+  const nome=document.getElementById('editor-name').value.trim();
+  const focus=document.getElementById('editor-focus').value.trim();
+  if(!nome){showToast('Digite o nome do treino');return;}
+  editorExList=editorExList.map((ex,i)=>({
+    ...ex,
+    nome:document.getElementById('een-'+i)?.value||ex.nome,
+    series:parseInt(document.getElementById('ees-'+i)?.value)||ex.series,
+    reps:document.getElementById('eer-'+i)?.value||ex.reps,
+    musculo:document.getElementById('eem-'+i)?.value||ex.musculo||''
+  })).filter(ex=>ex.nome.trim());
+  if(!S.customTreinos)S.customTreinos={};
+  const tid=editorTid||(nome.toLowerCase().replace(/\s+/g,'_')+'_'+Date.now());
+  if(!S.customTreinos[tid])S.customTreinos[tid]={};
+  S.customTreinos[tid].label=nome;
+  S.customTreinos[tid].focus=focus;
+  S.customTreinos[tid].exercicios=editorExList;
+  if(!editorTid){
+    if(!S.treinosList)S.treinosList=getTreinos().map(t=>t.id);
+    S.treinosList.push(tid);
+  }
+  save();showToast(editorTid?'Treino atualizado!':'Treino criado!');
+  showScreen('treinos-screen');setHeader('Treinos','Selecione e comece');
+  document.querySelectorAll('#bottom-nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('nav-treinos').classList.add('active');
+  renderTreinosTab();
+}
+function deleteEditorTreino(){
+  if(!editorTid)return;
+  document.getElementById('confirm-modal-title').textContent='Excluir treino';
+  document.getElementById('confirm-modal-msg').textContent='Excluir este treino? Isso não pode ser desfeito.';
+  document.getElementById('confirm-modal-ok').onclick=()=>{
+    closeModal('confirm-modal');
+    if(!S.treinosList)S.treinosList=getTreinos().map(t=>t.id);
+    S.treinosList=S.treinosList.filter(id=>id!==editorTid);
+    if(S.customTreinos&&S.customTreinos[editorTid])delete S.customTreinos[editorTid];
+    save();renderTreinosTab();
+    showScreen('treinos-screen');setHeader('Treinos','Selecione e comece');
+    document.querySelectorAll('#bottom-nav button').forEach(b=>b.classList.remove('active'));
+    document.getElementById('nav-treinos').classList.add('active');
+    showToast('Treino excluído.');
+  };
+  document.getElementById('confirm-modal').classList.add('open');
+}
 
 // ── GET TREINOS ──────────────────────────────────────────
 function getTreinos(){
@@ -1524,7 +1617,7 @@ function saveProfile(){
   S.profile={nome:document.getElementById('pf-nome').value,sexo:profSexo,idade:document.getElementById('pf-idade').value,altura:document.getElementById('pf-altura').value,pesoInicial:document.getElementById('pf-peso').value,pesoMeta:document.getElementById('pf-meta').value};
   save();const nome=S.profile.nome;
   setHeader(nome?'Olá, '+nome.split(' ')[0]:'Configurações','Personalizar');
-  document.getElementById('profile-desc').textContent=nome?nome+(S.profile.altura?' · '+S.profile.altura+'cm':''):'Nome, idade, altura, peso...';
+  document.getElementById('profile-desc').textContent=nome?nome+(S.profile.altura?' · '+S.profile.altura+'cm':''): 'Nome, idade, altura, peso...';
   document.getElementById('sub-settings').style.display='none';showToast('Perfil salvo!');
 }
 function renderNamesForm(){
@@ -1532,12 +1625,12 @@ function renderNamesForm(){
 }
 function saveNames(){
   if(!S.customTreinos)S.customTreinos={};
-  DT.forEach(t=>{if(!S.customTreinos[t.id])S.customTreinos[t.id]={exercicios:{}};const nl=document.getElementById('nl-'+t.id);const nf=document.getElementById('nf-'+t.id);if(nl)S.customTreinos[t.id].label=nl.value||t.label;if(nf)S.customTreinos[t.id].focus=nf.value||t.focus;});
+  getTreinos().forEach(t=>{if(!S.customTreinos[t.id])S.customTreinos[t.id]={exercicios:{}};const nl=document.getElementById('nl-'+t.id);const nf=document.getElementById('nf-'+t.id);if(nl)S.customTreinos[t.id].label=nl.value||t.label;if(nf)S.customTreinos[t.id].focus=nf.value||t.focus;});
   save();renderTreinosTab();document.getElementById('sub-settings').style.display='none';showToast('Nomes salvos!');
 }
 function setEditTreino(id){
   editTid=id;
-  ['a','b','c'].forEach(x=>{const b=document.getElementById('edit-btn-'+x);if(b){b.style.background=x===id?'var(--accent2)':'';b.style.color=x===id?'white':'';b.style.borderColor=x===id?'var(--accent2)':'';}});
+  ['a','b','c'].forEach(x=>{const b=document.getElementById('edit-btn-'+x);if(b){b.style.background=x===id?'var(--accent2)':'';b.style.color=x===id?'white':'';b.style.borderColor=x===id?'var(--accent2)':'' ;}});
   const t=getTreinos().find(t=>t.id===id);if(!t)return;
   document.getElementById('exedit-form').innerHTML=t.exercicios.map(ex=>`<div class="ex-edit-card"><h4>${ex.nome}</h4><div class="edit-row"><label>Séries</label><input class="edit-input" type="number" id="es-${ex.id}" value="${ex.series}" min="1" max="10"></div><div class="edit-row"><label>Reps</label><input class="edit-input" type="text" id="er-${ex.id}" value="${ex.reps}"></div></div>`).join('');
 }
